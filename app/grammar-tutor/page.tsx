@@ -118,15 +118,14 @@ export default function GrammarTutorPage() {
     const currentMode = mode;
 
     // Add user message
-    const userMessage: ChatMessage = {
+   const userMessage: ChatMessage = {
   id: generateMessageId(),
   sender: 'user',
   content: currentText || (currentFile ? 'Fayl yuklandi' : ''),
   filePreview: currentPreview,
-  // Faqat fayl bo‘lsa va mode audio/image bo‘lsa yozamiz
-  ...(currentFile && (currentMode === 'audio' || currentMode === 'image') && {
-    fileType: currentMode as 'audio' | 'image',  // type assertion kerak
-  }),
+  ...(currentFile && (currentMode === 'audio' || currentMode === 'image') 
+    ? { fileType: currentMode as 'audio' | 'image' } 
+    : {}),
   additionalText: currentText,
 };
 
@@ -261,20 +260,40 @@ export default function GrammarTutorPage() {
       }
 
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      // Xatoni xavfsiz olish uchun yangi o'zgaruvchi yaratamiz
+      let errorMessage: string = 'Noma\'lum xato'; // Agar xato Error emas bo'lsa, bu qiymatni ishlatamiz
+
+      // Agar err haqiqiy Error obyekti bo'lsa, uning message'ini olamiz
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } 
+      // Agar err oddiy string bo'lsa, uni to'g'ridan-to'g'ri ishlatamiz
+      else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      // Boshqa holatlarda esa 'Noma'lum xato' qoldiramiz
+
+      // Konsolga xatoni chiqaramiz (debug uchun)
       console.error("Frontend xatosi:", errorMessage);
+
+      // Yangi xato xabarini yaratamiz (chatga qo'shish uchun)
       const errorMsg: ChatMessage = {
-        id: generateMessageId(),
-        sender: 'ai',
-        content: `Xato yuz berdi: ${errorMessage}`,
+        id: generateMessageId(), // Yangi ID yaratamiz
+        sender: 'ai', // Bu AI dan kelgan xabar
+        content: `Xato yuz berdi: ${errorMessage}`, // Xato matnini qo'shamiz
       };
+
+      // Xabarlarni yangilaymiz va localStorage'ga saqlaymiz
       setMessages(prev => {
-        const updated = [...prev, errorMsg];
-        localStorage.setItem('chatMessages', JSON.stringify(updated));
-        return updated;
+        const updated = [...prev, errorMsg]; // Eski xabarlarga yangisini qo'shamiz
+        localStorage.setItem('chatMessages', JSON.stringify(updated)); // Saqlaymiz
+        return updated; // Yangi array'ni qaytaramiz
       });
-      setError(err.message);
+
+      // setError ga xato matnini beramiz (UI da ko'rsatish uchun)
+      setError(errorMessage);
     } finally {
+      // Har qanday holatda loading'ni to'xtatamiz
       setIsLoading(false);
     }
   };
