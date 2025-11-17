@@ -119,13 +119,16 @@ export default function GrammarTutorPage() {
 
     // Add user message
     const userMessage: ChatMessage = {
-      id: generateMessageId(),
-      sender: 'user',
-      content: currentText || (currentFile ? 'Fayl yuklandi' : ''),
-      filePreview: currentPreview,
-      fileType: currentFile ? currentMode : undefined,
-      additionalText: currentText,
-    };
+  id: generateMessageId(),
+  sender: 'user',
+  content: currentText || (currentFile ? 'Fayl yuklandi' : ''),
+  filePreview: currentPreview,
+  // Faqat fayl bo‘lsa va mode audio/image bo‘lsa yozamiz
+  ...(currentFile && (currentMode === 'audio' || currentMode === 'image') && {
+    fileType: currentMode as 'audio' | 'image',  // type assertion kerak
+  }),
+  additionalText: currentText,
+};
 
     setMessages(prev => {
       const updated = [...prev, userMessage];

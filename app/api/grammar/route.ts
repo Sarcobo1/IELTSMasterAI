@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 60,
-};
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
@@ -440,7 +438,7 @@ If there are no grammar errors, return an empty corrections array but still incl
 
       return NextResponse.json(finalResponse, { status: 200 });
     }
-
+//config
     return NextResponse.json({ error: 'Invalid mode or missing file' }, { status: 400 });
 
   } catch (error: unknown) {
