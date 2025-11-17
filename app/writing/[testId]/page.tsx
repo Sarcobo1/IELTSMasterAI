@@ -367,11 +367,11 @@ export default function WritingTaskPage() {
 
                   {selectedMetric === "Overall" && (
                     <div className="space-y-2">
-                      {getSuggestions().map((suggestion, i) => (
-                        <div key={i} className="bg-yellow-50 border border-yellow-200 p-3 rounded">
+                      {getSuggestions().map((suggestion: string, i: number) => (
+                          <div key={i} className="bg-yellow-50 border border-yellow-200 p-3 rounded">
                           <p className="text-slate-700">• {suggestion}</p>
                         </div>
-                      ))}
+                        ))}
                     </div>
                   )}
 
