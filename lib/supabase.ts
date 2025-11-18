@@ -1,18 +1,21 @@
 // lib/supabase.ts
 import { createClient } from '@supabase/supabase-js'
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase environment variables. ' +
-      'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Netlify environment variables.'
-    )
-  }
+export const supabase = {
+  get client() {
+    if (!supabaseClient) {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  return createClient(supabaseUrl, supabaseAnonKey)
+      if (!url || !key) {
+        // Build vaqtida xato bermaydi, faqat runtime’da null qaytaradi
+        return null
+      }
+
+      supabaseClient = createClient(url, key)
+    }
+    return supabaseClient
+  },
 }
-
-export const supabase = getSupabaseClient()
