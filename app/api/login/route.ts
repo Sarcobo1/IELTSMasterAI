@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server' 
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'  // Changed
 import { hashPassword } from '@/lib/server-utils'
 
 export async function POST(req: Request) {
   try {
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error('Supabase environment variables are missing')
-      return NextResponse.json({ message: 'Server configuration error' }, { status: 500 })
-    }
-
     const { email, password } = await req.json()
 
     if (!email || !password) {
@@ -18,6 +12,8 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase()
     const hashedPassword = hashPassword(password)
+
+    const supabase = getSupabase()  // Get client here
 
     // Fetch user
     const { data: user, error } = await supabase
@@ -31,7 +27,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Generate token
     const token = `auth-token-${Date.now()}-${normalizedEmail.split('@')[0]}`
 
     console.log(`Successful login: ${normalizedEmail}`)
