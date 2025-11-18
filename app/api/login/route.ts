@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server' 
-import { supabase } from '@/lib/supabase.ts' // .ts ni qo'shing
-import { hashPassword } from '@/lib/utils.ts'   // .ts ni qo'shing
+import { supabase } from '@/lib/supabase'
+import { hashPassword } from '@/lib/server-utils'
+
 export async function POST(req: Request) {
   try {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Supabase environment variables are missing')
+      return NextResponse.json({ message: 'Server configuration error' }, { status: 500 })
+    }
+
     const { email, password } = await req.json()
 
     if (!email || !password) {
@@ -24,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Generate token (realda JWT ishlatish mumkin)
+    // Generate token
     const token = `auth-token-${Date.now()}-${normalizedEmail.split('@')[0]}`
 
     console.log(`Successful login: ${normalizedEmail}`)
