@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server'
-import { supabase } from '../../../lib/supabase'
-import { hashPassword } from '../../../lib/utils'
-
+import { NextResponse } from 'next/server' 
+import { supabase } from '@/lib/supabase' 
+import { hashPassword } from '@/lib/utils' 
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json()
