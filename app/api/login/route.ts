@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server' 
-import { getSupabase } from '@/lib/supabase'  // Changed
-import { hashPassword } from '@/lib/server-utils'
+import { supabase } from '@/lib/supabase'
+import { hashPassword } from '@/lib/server-utils'  // Changed import
 
 export async function POST(req: Request) {
   try {
@@ -12,8 +12,6 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase()
     const hashedPassword = hashPassword(password)
-
-    const supabase = getSupabase()  // Get client here
 
     // Fetch user
     const { data: user, error } = await supabase
@@ -27,6 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 })
     }
 
+    // Generate token
     const token = `auth-token-${Date.now()}-${normalizedEmail.split('@')[0]}`
 
     console.log(`Successful login: ${normalizedEmail}`)

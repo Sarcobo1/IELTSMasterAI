@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '../../../lib/supabase'
-import { hashPassword } from '../../../lib/utils'
+import { hashPassword } from '../../../lib/server-utils'  // Changed this line
 
 export async function POST(req: Request) {
   try {
