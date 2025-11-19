@@ -123,3 +123,16 @@
     @apply bg-background text-foreground;
   }
 }
+.typed-cursor {
+  display: inline-block;
+  margin-left: 6px;
+  opacity: 1;
+  animation: blink 1s steps(2, start) infinite;
+  font-weight: 600;
+}
+
+@keyframes blink {
+  to {
+    opacity: 0;
+  }
+}

@@ -42,7 +42,7 @@ export default function Navigation() {
           <Link href="/" className="flex items-center gap-3 font-bold text-lg sm:text-xl text-slate-900">
             <Image src="/icon.webp" alt="logo" width={40} height={40} className="rounded-md object-cover" />
             <span className="hidden sm:inline">IELTS MasterAI</span>
-            <span className="sm:hidden">AI</span>
+            <span className="sm:hidden">IA</span>
           </Link>
 
           {/* Desktop Navigation */}
