@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import Script from "next/script"
 
-
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
@@ -30,18 +29,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Google site verification */}
+        <meta name="google-site-verification" content="wJMZvfx1rO8CzfMhJIfDEY1z7K6jUTa18nUhXjMgpIc" />
+      </head>
+
       <Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-3Y8E096913"
-  strategy="afterInteractive"
-/>
-<Script id="ga4" strategy="afterInteractive">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-3Y8E096913');
-  `}
-</Script>
+        src="https://www.googletagmanager.com/gtag/js?id=G-3Y8E096913"
+        strategy="afterInteractive"
+      />
+      <Script id="ga4" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-3Y8E096913');
+        `}
+      </Script>
 
       <body className="font-sans antialiased">
         {children}
