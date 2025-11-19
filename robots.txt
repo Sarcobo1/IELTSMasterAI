@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ieltsmasterai.netlify.app/sitemap.xml
