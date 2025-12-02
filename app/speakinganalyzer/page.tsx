@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { 
-    FilesetResolver, 
     FaceLandmarker, 
     HandLandmarker, 
     FaceLandmarkerResult, 
@@ -10,16 +9,31 @@ import {
 } from "@mediapipe/tasks-vision";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// 💡 Navigatsiya panelini import qilamiz
+// Navigatsiya panelini import qilamiz
 import Navigation from "@/components/navigation"; 
-import { Eye, PersonStanding, Hand, Volume2 } from 'lucide-react';
+import { Eye, PersonStanding, Hand, Volume2, Loader2 } from 'lucide-react';
 
-function Card({ title, value, color, icon }: { title: string, value: number, color: string, icon: React.ReactNode }) {
-    const colorClass = `text-${color}-600`;
-    const bgColor = `bg-${color}-50`;
+// --- Card Komponenti ---
+interface CardProps {
+    title: string;
+    value: number;
+    color: string;
+    icon: React.ReactNode;
+}
+
+function Card({ title, value, color, icon }: CardProps) {
+    const colorMap = {
+        yellow: { text: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
+        blue: { text: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+        cyan: { text: "text-cyan-600", bg: "bg-cyan-50", border: "border-cyan-200" },
+        green: { text: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+    };
+    
+    const { text: colorClass, bg: bgColor, border: borderColor } = colorMap[color as keyof typeof colorMap] || colorMap.blue;
+
     return (
-        <div className={`${bgColor} p-4 rounded-xl flex items-center gap-4 border border-${color}-200 shadow-lg hover:shadow-xl transition-shadow`}>
-            <div className={`p-3 rounded-full bg-white border border-${color}-200`}>
+        <div className={`${bgColor} p-4 rounded-xl flex items-center gap-4 border ${borderColor} shadow-lg hover:shadow-xl transition-shadow`}>
+            <div className={`p-3 rounded-full bg-white border ${borderColor}`}>
                 {icon}
             </div>
             <div className="flex flex-col">
@@ -41,7 +55,9 @@ export default function SpeakingAnalyzer() {
 
     const audioCtxRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    const dataArrayRef = useRef<Uint8Array>(new Uint8Array(128));
+    
+    // 1. DataArrayRef ni to'g'ri e'lon qilish
+    const dataArrayRef = useRef<Uint8Array | null>(null); 
 
     const modelLoadedRef = useRef(false);
     const runningRef = useRef(false);
@@ -77,7 +93,6 @@ export default function SpeakingAnalyzer() {
         volume: number;
     } | null>(null);
 
-    // FPS hisoblash uchun
     const fpsCounterRef = useRef({ frames: 0, lastTime: performance.now() });
 
     const loadModels = async () => {
@@ -88,12 +103,12 @@ export default function SpeakingAnalyzer() {
                 "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
             );
 
-            // Face Landmarker - optimallashtirilgan
+            setLoading("Yuz detektor yuklanmoqda...");
             faceLandmarkerRef.current = await vision.FaceLandmarker.createFromOptions(fileset, {
                 baseOptions: {
                     modelAssetPath:
                         "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task",
-                    delegate: "GPU", // GPU ishlatish (agar mavjud bo'lsa)
+                    delegate: "GPU",
                 },
                 runningMode: "VIDEO",
                 numFaces: 1,
@@ -103,7 +118,7 @@ export default function SpeakingAnalyzer() {
                 minTrackingConfidence: 0.5,
             });
 
-            // Hand Landmarker - optimallashtirilgan
+            setLoading("Qo'l detektor yuklanmoqda...");
             handLandmarkerRef.current = await vision.HandLandmarker.createFromOptions(fileset, {
                 baseOptions: {
                     modelAssetPath:
@@ -120,26 +135,91 @@ export default function SpeakingAnalyzer() {
             modelLoadedRef.current = true;
         } catch (error) {
             console.error("Modellarni yuklashda xato:", error);
-            setLoading("Modellarni yuklashda xato yuz berdi.");
+            setLoading("Modellarni yuklashda xato yuz berdi. Konsolni tekshiring.");
             runningRef.current = false;
             setIsStarted(false);
         }
     };
 
+    // Stop funksiyasi - Tizimni to'liq tozalash uchun
+    const stop = useCallback(async () => {
+        if (!runningRef.current && overallScore !== null) return; // Agar natijalar ko'rsatilgan bo'lsa, qayta chaqirmaymiz
+
+        const wasRunning = runningRef.current;
+        runningRef.current = false;
+        setIsStarted(false);
+        setLoading(wasRunning ? "Maslahat generatsiya qilinmoqda..." : "Tayyor");
+
+        // Media Stream'ni to'xtatish
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+        }
+
+        // Audio kontekstni yopish
+        if (audioCtxRef.current) {
+            await audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current = null;
+        }
+        
+        // FaceLandmarker'ni yopish
+        if (faceLandmarkerRef.current) {
+          faceLandmarkerRef.current.close(); 
+          faceLandmarkerRef.current = null;
+        }
+
+        // HandLandmarker'ni yopish
+        if (handLandmarkerRef.current) {
+          handLandmarkerRef.current.close();
+          handLandmarkerRef.current = null;
+        }
+        
+        modelLoadedRef.current = false; 
+
+        if (wasRunning) {
+            // Faqat to'xtatilganda natijalarni hisoblash
+            const calcAverage = (scores: number[]) => 
+                scores.length > 0 ? Math.floor(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+                
+            const avgEye = calcAverage(eyeScoresRef.current);
+            const avgPosture = calcAverage(postureScoresRef.current);
+            const avgGesture = calcAverage(gestureScoresRef.current);
+            const avgVolume = calcAverage(volumeScoresRef.current);
+
+            const overall = Math.floor((avgEye + avgPosture + avgGesture + avgVolume) / 4);
+
+            setAverageScores({ eye: avgEye, posture: avgPosture, gesture: avgGesture, volume: avgVolume });
+            setOverallScore(overall);
+
+            setEyeScore(0);
+            setPostureScore(0);
+            setGestureScore(0);
+            setVolumeScore(0);
+            setFps(0);
+
+            await generateFeedback(avgEye, avgPosture, avgGesture, avgVolume);
+        }
+
+        setLoading("Tayyor");
+    }, [overallScore]);
+
     const start = async () => {
         if (runningRef.current) return;
         
+        // Avvalgi natijalarni tozalash
+        setFeedback("");
+        setOverallScore(null);
+
         setLoading("Kamera va mikrofon ochilmoqda...");
         runningRef.current = true;
         
         try {
-            // Past resolution (yaxshiroq FPS uchun)
             streamRef.current = await navigator.mediaDevices.getUserMedia({
                 video: { 
                     facingMode: "user", 
                     width: { ideal: 640 }, 
                     height: { ideal: 480 },
-                    frameRate: { ideal: 30, max: 30 } // Max 30 FPS
+                    frameRate: { ideal: 30, max: 30 }
                 },
                 audio: true,
             });
@@ -159,18 +239,18 @@ export default function SpeakingAnalyzer() {
         videoRef.current.srcObject = streamRef.current;
         await videoRef.current.play();
 
+        // Audio tizimini sozlash
         setLoading("Audio analiz sozlanmoqda...");
-        
         audioCtxRef.current = new AudioContext();
         const src = audioCtxRef.current.createMediaStreamSource(streamRef.current);
-
         analyserRef.current = audioCtxRef.current.createAnalyser();
         analyserRef.current.fftSize = 256;
-
         src.connect(analyserRef.current);
-        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+        
+        // 2. Data array ni startda yaratish
+        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount); 
 
-        setLoading("Model yuklanmoqda...");
+        // Modellarni yuklash
         if (!modelLoadedRef.current) {
             await loadModels();
         }
@@ -183,98 +263,33 @@ export default function SpeakingAnalyzer() {
         setLoading("Ishlamoqda...");
         setIsStarted(true);
 
+        // Score massivlarini tozalash
         eyeScoresRef.current = [];
         postureScoresRef.current = [];
         gestureScoresRef.current = [];
         volumeScoresRef.current = [];
         currentScoresRef.current = { eye: 0, posture: 0, gesture: 0, volume: 0 };
-        setFeedback("");
-        setOverallScore(null);
-        setAverageScores(null);
         lastDetectionTimeRef.current = 0;
         fpsCounterRef.current = { frames: 0, lastTime: performance.now() };
 
         requestAnimationFrame(loop);
     };
 
-    const stop = async () => {
-        if (!runningRef.current) return;
-
-        runningRef.current = false;
-        setIsStarted(false);
-        setLoading("Maslahat generatsiya qilinmoqda...");
-
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach((track) => track.stop());
-            streamRef.current = null;
-        }
-
-        if (audioCtxRef.current) {
-            await audioCtxRef.current.close().catch(() => {});
-            audioCtxRef.current = null;
-        }
-
-        // 💡 Modellar faqat to'xtatishda emas, balki boshida yuklanishi kerak (start funksiyasida shunday)
-        // Shuning uchun bu yerda ularni yopish shart emas, agar butun ilovada qayta ishlatilmasa. 
-        // Lekin resurslarni bo'shatish uchun yopish yaxshi amaliyot.
-        if (faceLandmarkerRef.current) {
-          faceLandmarkerRef.current.close();
-          faceLandmarkerRef.current = null;
-        }
-
-        if (handLandmarkerRef.current) {
-          handLandmarkerRef.current.close();
-          handLandmarkerRef.current = null;
-        }
-        
-        modelLoadedRef.current = false;
-
-
-        const calcAverage = (scores: number[]) => 
-            scores.length > 0 ? Math.floor(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-            
-        const avgEye = calcAverage(eyeScoresRef.current);
-        const avgPosture = calcAverage(postureScoresRef.current);
-        const avgGesture = calcAverage(gestureScoresRef.current);
-        const avgVolume = calcAverage(volumeScoresRef.current);
-
-        // Umumiy ball (o'rtacha)
-        const overall = Math.floor((avgEye + avgPosture + avgGesture + avgVolume) / 4);
-
-        setAverageScores({
-            eye: avgEye,
-            posture: avgPosture,
-            gesture: avgGesture,
-            volume: avgVolume
-        });
-        setOverallScore(overall);
-
-        setEyeScore(0);
-        setPostureScore(0);
-        setGestureScore(0);
-        setVolumeScore(0);
-        setFps(0);
-
-        await generateFeedback(avgEye, avgPosture, avgGesture, avgVolume);
-
-        setLoading("Tayyor");
-    };
 
     const generateFeedback = async (avgEye: number, avgPosture: number, avgGesture: number, avgVolume: number) => {
+        // (Bu funksiya avvalgi javoblardagidek qoladi)
         try {
-            const apiKey = process.env.NEXT_PUBLIC_NEXT_GEMINI_API_KEY; 
+            const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
             if (!apiKey) {
                 setFeedback("⚠️ Xato: Gemini API kaliti topilmadi. .env.local faylida NEXT_PUBLIC_GEMINI_API_KEY ni sozlang.");
                 return;
             }
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-            // Umumiy ball
             const overall = Math.floor((avgEye + avgPosture + avgGesture + avgVolume) / 4);
 
-            // Har bir ko'rsatkich uchun baho
             const getRating = (score: number) => {
                 if (score >= 80) return "A'LO";
                 if (score >= 65) return "YAXSHI";
@@ -303,11 +318,34 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            setFeedback(response.text());
+            setFeedback(response.text);
         } catch (error) {
             console.error("Gemini xatosi:", error);
             setFeedback("❌ Maslahat generatsiya qilishda xato yuz berdi. Iltimos, qayta urinib ko'ring.");
         }
+    };
+
+    // 3. Audio analiz funksiyasini tuzatish
+    const computeVolume = () => {
+        const analyser = analyserRef.current;
+        const dataArray = dataArrayRef.current;
+
+        // Xatolikni oldini olish uchun qat'iy tekshiruv
+        if (!analyser || !dataArray) {
+            currentScoresRef.current.volume = 0;
+            setVolumeScore(0);
+            return;
+        }
+
+        // dataArray ni lokal o'zgaruvchi sifatida ishlatish xatolikni bartaraf etadi
+        analyser.getByteFrequencyData(dataArray);
+
+        const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        let volume = Math.floor((avg / 255) * 100 * 1.5); 
+        volume = Math.min(100, volume);
+        
+        currentScoresRef.current.volume = volume;
+        setVolumeScore(volume);
     };
 
     // OPTIMALLASHTIRILGAN LOOP 
@@ -315,7 +353,8 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
         if (!runningRef.current || !videoRef.current || !modelLoadedRef.current) return;
         
         const now = performance.now();
-        
+        const video = videoRef.current;
+
         // FPS hisobini yangilash
         fpsCounterRef.current.frames++;
         if (now - fpsCounterRef.current.lastTime >= 1000) {
@@ -331,7 +370,7 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
             return;
         }
 
-        // THROTTLING: Model detection har 100ms da bir marta (10 FPS)
+        // THROTTLING: Model detection har 100ms da bir marta
         const timeSinceLastDetection = now - lastDetectionTimeRef.current;
         const shouldDetect = timeSinceLastDetection >= 100;
 
@@ -340,17 +379,27 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
 
             let faceRes: FaceLandmarkerResult | null = null;
             let handRes: HandLandmarkerResult | null = null;
+            
+            // 4. KRITIK TEKSHIRUV: Video yuklanganiga ishonch hosil qilish
+            if (video.videoWidth === 0) return;
 
             try {
-                faceRes = faceLandmarker.detectForVideo(videoRef.current, now);
+                // MUHIM TUZATISH: faceLandmarker da yuzaga keladigan xato boshqaruvi
+                faceRes = faceLandmarker.detectForVideo(video, now);
             } catch (e) {
-                console.warn("FaceLandmarker xatosi:", e);
+                console.error("KRITIK XATO: FaceLandmarker ishdan chiqdi!", e);
+                runningRef.current = false; 
+                alert("Tahlil tizimida xato yuz berdi. Iltimos, qayta urinib ko'ring.");
+                stop(); // Tizimni yopish
+                return;
             }
 
             try {
-                handRes = handLandmarker.detectForVideo(videoRef.current, now);
+                // MUHIM TUZATISH: handLandmarker da yuzaga keladigan xato boshqaruvi
+                handRes = handLandmarker.detectForVideo(video, now);
             } catch (e) {
-                console.warn("HandLandmarker xatosi:", e);
+                console.warn("HandLandmarker xatosi (davom etilmoqda):", e);
+                // Agar qo'l detektor ishlamay qolsa ham, boshqalar ishlashi uchun to'xtatmaymiz
             }
 
             computeScores(faceRes, handRes);
@@ -361,32 +410,28 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
             volumeScoresRef.current.push(currentScoresRef.current.volume);
         }
 
-        // Audio va drawing har frame'da (30 FPS)
+        // Audio va drawing har frame'da
         computeVolume();
         
-        if (videoRef.current) {
-            draw(videoRef.current);
-        }
+        draw(video);
 
         if (runningRef.current) {
             requestAnimationFrame(loop);
         }
-    }, []);
+    }, [stop]);
 
     const draw = (video: HTMLVideoElement) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext("2d", { alpha: false }); // alpha: false = tezroq
+        const ctx = canvas.getContext("2d", { alpha: false });
         if (!ctx) return;
 
-        // Canvas o'lchamini faqat bir marta o'rnat
         if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
         }
 
-        // Optimallashtirilgan mirror effect
         ctx.save();
         ctx.scale(-1, 1);
         ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
@@ -440,34 +485,18 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
         setPostureScore(posture);
 
         const handCount = hands?.landmarks?.length || 0;
-        let gesture = Math.min(100, handCount * 50);
+        let gesture = Math.min(100, handCount * 50); 
         
         currentScoresRef.current.gesture = gesture;
         setGestureScore(gesture);
     };
 
-    const computeVolume = () => {
-        if (!analyserRef.current) {
-            currentScoresRef.current.volume = 0;
-            setVolumeScore(0);
-            return;
-        }
-
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-
-        const avg = dataArrayRef.current.reduce((a, b) => a + b) / dataArrayRef.current.length;
-        let volume = Math.floor((avg / 255) * 100 * 1.5); 
-        volume = Math.min(100, volume);
-        
-        currentScoresRef.current.volume = volume;
-        setVolumeScore(volume);
-    };
 
     return (
         <>
             <Navigation />
 
-            <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col items-center p-6 pt-20"> {/* pt-20 Navbar balandligi uchun */}
+            <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col items-center p-6 pt-20">
                 <div className="flex items-center justify-center gap-4 mb-6 bg-white px-6 py-3 rounded-full shadow-md">
                     <h1 className="text-3xl font-bold text-center text-blue-600">Nutq Tahlilchisi</h1>
                     {isStarted && (
@@ -480,10 +509,12 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
                 {!isStarted ? (
                     <button
                         onClick={start}
-                        className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-full text-xl font-bold text-white transition duration-200 shadow-md"
+                        className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-full text-xl font-bold text-white transition duration-200 shadow-md flex items-center gap-2 justify-center"
                         disabled={loading !== "Tayyor"}
                     >
-                        {loading === "Tayyor" ? "BOSHLASH" : "YUKLANMOQDA..."}
+                        {loading === "Tayyor" ? "BOSHLASH" : (
+                            <><Loader2 className="animate-spin w-5 h-5 mr-2" />{loading}</>
+                        )}
                     </button>
                 ) : (
                     <button
@@ -494,7 +525,7 @@ Maslahatlar o'zbek tilida, qisqa, aniq va motivatsion bo'lsin. Emoji ishlatib, o
                     </button>
                 )}
 
-                <p className="mt-4 text-gray-600 font-medium">{loading}</p>
+                <p className="mt-4 text-gray-600 font-medium">{loading === "Tayyor" && overallScore === null ? "Analizni boshlash uchun bosing." : loading}</p>
 
                 <video muted ref={videoRef} autoPlay playsInline className="hidden" />
 

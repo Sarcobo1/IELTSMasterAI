@@ -6,8 +6,20 @@ import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button"; 
 import Link from 'next/link';
 
-// Simulyatsiya uchun xonalar ro'yxati (haqiqiyda backenddan olinadi)
-const rooms = [
+// --- TYPE DEFINITIONS ---
+// Xona ma'lumotlari uchun interfeys
+interface RoomData {
+    id: string;
+    name: string;
+    description: string;
+    participants: number;
+    maxParticipants: number;
+    observers: number;
+}
+// --- END TYPE DEFINITIONS ---
+
+// Simulyatsiya uchun xonalar ro'yxati (RoomData[] turida)
+const rooms: RoomData[] = [
     { id: '1', name: 'IELTS Speaking Xonasi #1', description: 'Beginner daraja', participants: 4, maxParticipants: 8, observers: 12 },
     { id: '2', name: 'IELTS Speaking Xonasi #2', description: 'Intermediate daraja', participants: 3, maxParticipants: 8, observers: 5 },
     { id: '3', name: 'IELTS Speaking Xonasi #3', description: 'Advanced daraja', participants: 5, maxParticipants: 8, observers: 8 },
@@ -15,7 +27,8 @@ const rooms = [
     // Qo'shimcha xonalar qo'shish mumkin
 ];
 
-const RoomCard = ({ room }) => {
+// RoomCard komponenti (room propiga aniq tur berildi)
+const RoomCard = ({ room }: { room: RoomData }) => {
     return (
         <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 hover:shadow-lg transition-all">
             <h3 className="text-xl font-bold text-slate-800 mb-2">{room.name}</h3>
@@ -28,7 +41,7 @@ const RoomCard = ({ room }) => {
                 <Headset size={18} className="text-blue-500 mr-2" />
                 <span>{room.observers} Tinglovchi</span>
             </div>
-            <Link href={`/voice-chat/${room.id}`}>
+            <Link href={`/voice-chat/${room.id}`} passHref> 
                 <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                     Kirish
                 </Button>
