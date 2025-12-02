@@ -1,21 +1,16 @@
 "use client"
-
 import { useState } from "react";
 import Sidebar from "../vocabulary/page1";
 import VocabularyCard from "../vocabulary/page";
 import { vocabularyData } from "../vocabulary/vocabulary";
 import { BookOpen, Sparkles } from "lucide-react";
-
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
-
 export default function VocabularyPage() {
   const [selectedTopic, setSelectedTopic] = useState("Environment");
-
   const topics = Object.keys(vocabularyData);
   const currentVocabulary = vocabularyData[selectedTopic] || [];
-
-  const getTopicColor = (topic) => {
+  const getTopicColor = (topic: string) => {
     const colors = {
       Environment: "from-emerald-500 to-teal-600",
       Technology: "from-blue-500 to-indigo-600",
@@ -23,26 +18,22 @@ export default function VocabularyPage() {
       Health: "from-rose-500 to-orange-600",
       Education: "from-cyan-500 to-blue-600",
     };
-    return colors[topic] || "from-blue-500 to-indigo-600";
+    return colors[topic as keyof typeof colors] || "from-blue-500 to-indigo-600";
   };
-
   const gradientClass = getTopicColor(selectedTopic);
-
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-      
+     
       <Navigation />
-
       <main className="flex-grow">
-        
+       
         {/* Hero Section with Gradient Background */}
         <div className={`bg-gradient-to-r ${gradientClass} relative overflow-hidden`}>
           {/* Decorative blur elements */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl -mr-48 -mt-48"></div>
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl -ml-40 -mb-40"></div>
-
           <div className="container mx-auto px-4 py-12 relative z-10">
-            
+           
             {/* Header with Icon */}
             <div className="flex items-start gap-4 mb-2">
               <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl border border-white/30 shadow-lg">
@@ -63,11 +54,9 @@ export default function VocabularyPage() {
             </div>
           </div>
         </div>
-
         {/* Main Content Area */}
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <div className="container mx-auto px-4 py-12">
-
             {/* Mobile Topic Selector */}
             <div className="md:hidden mb-8">
               <p className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Select Topic</p>
@@ -89,10 +78,9 @@ export default function VocabularyPage() {
                 </div>
               </div>
             </div>
-
             {/* Desktop & Mobile Layout */}
             <div className="flex gap-8">
-              
+             
               {/* Desktop Sidebar */}
               <div className="hidden md:block w-64 flex-shrink-0">
                 <div className="sticky top-24">
@@ -103,10 +91,9 @@ export default function VocabularyPage() {
                   />
                 </div>
               </div>
-
               {/* Main Content */}
               <div className="flex-1 min-w-0">
-                
+               
                 {/* Section Header */}
                 <div className="mb-10">
                   <div className="flex items-baseline gap-3 mb-3">
@@ -121,7 +108,6 @@ export default function VocabularyPage() {
                     Master these essential {selectedTopic.toLowerCase()} vocabulary words and phrases to achieve Band 9 proficiency. Each term is carefully selected and contextually explained.
                   </p>
                 </div>
-
                 {/* Vocabulary Cards Grid */}
                 <div className="grid gap-6">
                   {currentVocabulary.length > 0 ? (
@@ -146,7 +132,6 @@ export default function VocabularyPage() {
             </div>
           </div>
         </div>
-
         {/* CSS for animations */}
         <style jsx>{`
           @keyframes fadeIn {
@@ -161,7 +146,7 @@ export default function VocabularyPage() {
           }
         `}</style>
       </main>
-      
+     
       <Footer />
     </div>
   );
