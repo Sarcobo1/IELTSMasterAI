@@ -1,0 +1,183 @@
+"use client"
+
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Crown, Clock, Zap, MessageCircle, Sparkles } from "lucide-react"; // MessageCircle ikonkasini import qildim
+import { useRouter } from 'next/navigation';
+
+// 💡 Navigatsiya panelini import qilamiz
+import Navigation from "@/components/navigation"; 
+
+
+// Obuna rejasi turlari (Plan data)
+const plans = [
+    // 🔥 1. FREE PLAN (Bepul Reja) - Voice Chat o'rniga oddiy feature saqlanadi
+    {
+        id: 'free',
+        name: "Bepul",
+        price: "$0",
+        tag: "Dastlabki sinov",
+        features: [
+            { text: "Speaking Analyzer: Cheklangan foydalanish (Haftasiga 1 ta so'rov)", limited: true, icon: Clock },
+            { text: "Writing: Cheklangan AI baholash (Haftasiga 3 ta insho)", limited: true, icon: Clock },
+            { text: "Tanlangan mavzular bo'yicha cheklangan testlar", limited: true, icon: Clock },
+            { text: "Grammar Tutor: Asosiy maslahatlar", limited: false, icon: CheckCircle },
+        ],
+        style: "bg-white border-2 border-gray-300 hover:border-gray-500"
+    },
+    // 2. Premium rejasi
+    {
+        id: 'premium_monthly',
+        name: "Premium",
+        price: "$9",
+        tag: "Boshlang'ich",
+        features: [
+            { text: "Speaking Analyzer: Cheklangan foydalanish (Oyiga 20 ta so'rov)", limited: true, icon: Clock },
+            { text: "Writing: Cheklangan AI baholash (Oyiga 20 ta insho)", limited: true, icon: Clock },
+            { text: "Barcha 4 bo'lim bo'yicha cheklangan testlar", limited: true, icon: Clock },
+            { text: "Grammar Tutor: Standart maslahatlar", limited: false, icon: CheckCircle },
+        ],
+        style: "bg-slate-50 border-2 border-slate-200 hover:border-blue-300"
+    },
+    // 3. Premium Pro rejasi
+    {
+        id: 'premium_pro_monthly',
+        name: "Premium Pro",
+        price: "$19",
+        tag: "Eng qulay",
+        features: [
+            { text: "Speaking Analyzer: Cheklanmagan foydalanish", limited: false, icon: Zap },
+            { text: "Writing: 24/7 tezkor AI baholash (Cheklanmagan)", limited: false, icon: Zap },
+            { text: "Barcha 4 bo'lim bo'yicha cheksiz testlar", limited: false, icon: Zap },
+            { text: "Grammar Tutor: Premium maslahatlar", limited: false, icon: Zap },
+        ],
+        style: "bg-white border-2 border-blue-600 shadow-2xl shadow-blue-300"
+    },
+    // 4. Yillik Premium Pro rejasi
+    {
+        id: 'premium_pro_annual',
+        name: "Yillik Premium Pro",
+        price: "$150",
+        tag: "Eng ommabop (50% tejash)",
+        isAnnual: true,
+        features: [
+            // Yangi funksiya (Tez kunda) qo'shildi:
+            { text: "Boshqa studentlar bilan Voice-Chat (Tez Kunda)", limited: true, icon: MessageCircle, isSoon: true }, 
+            { text: "Barcha Pro funksiyalari", limited: false, icon: Crown },
+            { text: "Yillik 50% chegirma", limited: false, icon: Crown },
+            { text: "Maxsus Ustuvor Qo'llab-quvvatlash", limited: false, icon: Crown },
+            { text: "Kelajakdagi barcha yangi Pro funksiyalar", limited: false, icon: Crown },
+        ],
+        style: "bg-white border-2 border-amber-500 shadow-2xl shadow-amber-300"
+    }
+];
+
+export default function PremiumPage() {
+    const router = useRouter();
+    
+    const handlePurchase = (planId: string, isAnnual: boolean) => {
+        // Bepul rejani sotib olish uchun alohida shart
+        if (planId === 'free') {
+            localStorage.setItem('isPremium', 'false');
+            localStorage.setItem('premiumPlanId', 'free');
+            alert("✅ Bepul rejani faollashtirdingiz. Cheklangan funksiyalardan foydalanishingiz mumkin!");
+            router.push('/');
+            return;
+        }
+
+
+        const purchaseSuccess = window.confirm(`Siz "${planId}" rejasini sotib olish tugmasini bosdingiz. Simulyatsiyani davom ettirishni xohlaysizmi?`);
+
+        if (!purchaseSuccess) return;
+
+        localStorage.setItem('isPremium', 'true');
+        localStorage.setItem('premiumPlanId', planId); 
+        
+        const days = isAnnual ? 365 : 30;
+        const endDate = new Date(Date.now() + (days * 24 * 60 * 60 * 1000)).toISOString();
+        localStorage.setItem('premiumEndDate', endDate);
+
+        alert("🎉 Tabriklaymiz! Siz premium obunaga ega bo'ldingiz! Funksiyalar ochildi.");
+        
+        router.push('/'); 
+    };
+
+    return (
+        <>
+            <Navigation /> 
+            
+            {/* Sahifa Kontenti */}
+            <div className="min-h-screen bg-slate-50 py-12 px-4 pt-20">
+                <div className="max-w-7xl mx-auto text-center">
+                    <Crown size={48} className="text-amber-500 mx-auto mb-4 fill-amber-500" />
+                    <h1 className="text-4xl font-black text-slate-900 mb-2">IELTS MasterAI Obuna Rejalari</h1>
+                    <p className="text-xl text-slate-600 mb-10">Maqsadingizga mos keladigan rejangizni tanlang va o'rganishni boshlang.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6"> 
+                        
+                        {plans.map((plan) => (
+                            <div 
+                                key={plan.id}
+                                className={`relative p-8 rounded-2xl shadow-xl flex flex-col transition-all duration-300 ${plan.style} ${plan.id === 'free' ? 'shadow-md hover:shadow-lg' : ''}`}
+                            >
+                                {/* Ommaboplik yorlig'i */}
+                                {plan.isAnnual && (
+                                    <div className="absolute top-0 right-0 -mt-3 -mr-3 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full transform rotate-3 shadow-lg">
+                                        {plan.tag}
+                                    </div>
+                                )}
+
+                                <h2 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h2>
+                                <p className={`text-4xl font-black mb-4 ${plan.isAnnual ? 'text-amber-600' : plan.id === 'free' ? 'text-gray-600' : 'text-blue-600'}`}>
+                                    {plan.price}
+                                    <span className="text-lg text-slate-500">
+                                        {plan.isAnnual ? '/yiliga' : plan.id === 'free' ? '' : '/oyiga'}
+                                    </span>
+                                </p>
+                                
+                                <div className="space-y-3 text-left flex-grow mb-8">
+                                    {plan.features.map((feature, index) => (
+                                        <div key={index} className="flex items-start gap-3">
+                                            
+                                            {/* Ikonka renderi */}
+                                            {feature.icon === Crown ? (
+                                                <Crown size={20} className="text-amber-500 flex-shrink-0 mt-1" />
+                                            ) : (
+                                                <feature.icon 
+                                                    size={20} 
+                                                    // "Tez Kunda" bo'lsa, uni biroz kulrang qilib qo'yamiz (MessageCircle uchun)
+                                                    className={feature.isSoon ? "text-slate-400 flex-shrink-0 mt-1" : feature.limited ? "text-red-500 flex-shrink-0 mt-1" : "text-blue-500 flex-shrink-0 mt-1"} 
+                                                />
+                                            )}
+                                            
+                                            <p className={`text-slate-700 ${feature.limited ? 'opacity-70' : ''}`}>
+                                                {feature.text}
+                                                {/* "Tez Kunda" yorlig'i uchun maxsus rang va yozuv */}
+                                                {feature.isSoon && <span className="text-xs text-slate-500 ml-1 font-semibold"> (Tez Kunda)</span>}
+                                                {/* Oddiy cheklov yorlig'i */}
+                                                {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Limitli)</span>}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <Button 
+                                    onClick={() => handlePurchase(plan.id, !!plan.isAnnual)} 
+                                    className={`w-full h-12 text-lg font-semibold shadow-lg ${
+                                        plan.id === 'free'
+                                        ? 'bg-gray-500 hover:bg-gray-600 shadow-gray-500/30'
+                                        : plan.isAnnual 
+                                        ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30' 
+                                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                                    }`}
+                                >
+                                    {plan.id === 'free' ? 'Bepul Boshlash' : 'Sotib olish'}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+//chat

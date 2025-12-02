@@ -1,16 +1,16 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { Search } from "lucide-react"
+import { Search, MessageCircle, Mail, HelpCircle, BookOpen, CreditCard, Shield, Sparkles, ChevronDown } from "lucide-react"
 
 const faqs = [
   {
     category: "Account & Profile",
+    icon: Shield,
     questions: [
       {
         q: "How do I reset my password?",
@@ -20,17 +20,83 @@ const faqs = [
         q: "How can I update my billing information?",
         a: "Visit Settings > Billing to update your payment method and billing address.",
       },
+      {
+        q: "Can I change my email address?",
+        a: "Yes, go to Settings > Profile and update your email. You'll need to verify the new email address.",
+      },
+      {
+        q: "How do I delete my account?",
+        a: "Contact our support team via the form below, and we'll help you process your account deletion request.",
+      },
     ],
-  },//submit
+  },
   {
     category: "Billing & Subscriptions",
+    icon: CreditCard,
+    questions: [
+      {
+        q: "What payment methods do you accept?",
+        a: "We accept all major credit cards, PayPal, and bank transfers for annual subscriptions.",
+      },
+      {
+        q: "Is there a free trial available?",
+        a: "Yes, we offer a 7-day free trial to explore all features with no credit card required.",
+      },
+      {
+        q: "Can I cancel my subscription anytime?",
+        a: "Absolutely! You can cancel your subscription at any time from your account settings. No questions asked.",
+      },
+      {
+        q: "Do you offer refunds?",
+        a: "Yes, we offer a 30-day money-back guarantee if you're not satisfied with our service.",
+      },
+    ],
+  },
+  {
+    category: "Features & Learning",
+    icon: BookOpen,
     questions: [
       {
         q: "What is the AI Grammar Tutor?",
-        a: "Our AI Grammar Tutor provides personalized grammar lessons tailored to your learning level.",
+        a: "Our AI Grammar Tutor provides personalized grammar lessons tailored to your learning level with real-time feedback and corrections.",
       },
-      { q: "Is there a free trial available?", a: "Yes, we offer a 7-day free trial to explore all features." },
+      {
+        q: "How does the speaking practice work?",
+        a: "Record your responses to IELTS speaking questions and receive instant AI-powered feedback on fluency, pronunciation, and vocabulary.",
+      },
+      {
+        q: "Can I track my progress?",
+        a: "Yes! Our dashboard provides detailed analytics on your performance across all IELTS sections with improvement suggestions.",
+      },
+      {
+        q: "Are practice tests included?",
+        a: "Yes, we provide unlimited full-length practice tests that simulate real IELTS exam conditions.",
+      },
     ],
+  },
+]
+
+const quickLinks = [
+  {
+    icon: MessageCircle,
+    title: "Live Chat",
+    description: "Chat with our support team",
+    action: "Start Chat",
+    color: "from-blue-500 to-blue-600"
+  },
+  {
+    icon: Mail,
+    title: "Email Support",
+    description: "support@ieltsai.com",
+    action: "Send Email",
+    color: "from-purple-500 to-purple-600"
+  },
+  {
+    icon: HelpCircle,
+    title: "Help Center",
+    description: "Browse detailed guides",
+    action: "Visit Center",
+    color: "from-red-500 to-red-600"
   },
 ]
 
@@ -38,6 +104,7 @@ export default function SupportPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [submitted, setSubmitted] = useState(false)
+  const [openFaq, setOpenFaq] = useState<string | null>(null)
 
   const filteredFaqs = faqs
     .map((category) => ({
@@ -50,126 +117,247 @@ export default function SupportPage() {
     }))
     .filter((cat) => cat.questions.length > 0)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    ;(async () => {
-      if (!formData.name || !formData.email || !formData.message) {
-        alert("Please fill all fields before submitting.")
-        return
-      }
-      try {
-        const res = await fetch('/api/support', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        })
-        if (res.ok) {
-          setSubmitted(true)
-          setFormData({ name: '', email: '', message: '' })
-          setTimeout(() => setSubmitted(false), 3000)
-        } else {
-          const data = await res.json()
-          console.error('Submit error:', data)
-          alert('Failed to submit inquiry. Please try again later.')
-        }
-      } catch (err) {
-        console.error('Submit exception:', err)
-        alert('An error occurred while submitting. Please try again later.')
-      }
-    })()
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+
+  if (!formData.name || !formData.email || !formData.message) {
+    alert("Please fill all fields before submitting.")
+    return
   }
 
+  try {
+    const res = await fetch('/api/support', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+
+    if (res.ok) {
+      setSubmitted(true)
+      setFormData({ name: '', email: '', message: '' })
+      setTimeout(() => setSubmitted(false), 5000)
+    } else {
+      alert("Failed to submit message.")
+    }
+  } catch (error) {
+    alert("An error occurred. Please try again later.")
+  }
+}
+
+
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white overflow-x-hidden">
       <Navigation />
 
-      <main className="flex-grow py-12 sm:py-20 px-3 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">How Can we help?</h1>
-            <p className="text-lg text-slate-600">
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-16 sm:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 -left-40 w-80 h-80 bg-red-600 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-40 right-20 w-96 h-96 bg-cyan-600 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm mb-6">
+              <Sparkles size={16} className="text-red-400" />
+              <span className="text-sm font-semibold text-red-400">24/7 Support Available</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 leading-tight">
+              How Can We <span className="bg-gradient-to-r from-red-400 to-cyan-400 bg-clip-text text-transparent">Help You?</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
               Find answers to your questions or get in touch with our support team
             </p>
-          </div>
 
-          {/* Search */}
-          <div className="relative mb-12">
-            <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search for answers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-400 outline-none"
-            />
+            {/* Search Bar */}
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search for answers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl text-white placeholder-gray-400 focus:border-red-400 focus:bg-white/20 outline-none transition-all"
+              />
+            </div>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* FAQs */}
-            <div className="lg:col-span-2 space-y-8">
-              {filteredFaqs.length > 0 ? (
-                filteredFaqs.map((category, idx) => (
-                  <div key={idx}>
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">{category.category}</h2>
-                    <div className="space-y-3">
-                      {category.questions.map((item, i) => (
-                        <details
-                          key={i}
-                          className="border border-slate-200 rounded-lg p-4 cursor-pointer hover:bg-slate-50"
-                        >
-                          <summary className="font-semibold text-slate-900">{item.q}</summary>
-                          <p className="text-slate-600 mt-3">{item.a}</p>
-                        </details>
-                      ))}
-                    </div>
+        {/* Quick Links */}
+        <section className="py-8 px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {quickLinks.map((link, idx) => (
+                <div
+                  key={idx}
+                  className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200 cursor-pointer"
+                >
+                  <div className={`w-12 h-12 bg-gradient-to-br ${link.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <link.icon size={24} className="text-white" />
                   </div>
-                ))
-              ) : (
-                <p className="text-slate-600">No results found. Try a different search.</p>
-              )}
-            </div>
-
-            {/* Contact Form */}
-            <div className="bg-slate-50 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Can't find an answer?</h3>
-
-              {submitted && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-                  Thank you! We'll get back to you soon.
+                  <h3 className="font-bold text-gray-900 mb-2">{link.title}</h3>
+                  <p className="text-sm text-gray-600 mb-4">{link.description}</p>
+                  <span className="text-sm font-semibold text-red-600 group-hover:text-red-700">
+                    {link.action} →
+                  </span>
                 </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-3 border border-slate-200 rounded-lg text-sm"
-                />
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full p-3 border border-slate-200 rounded-lg text-sm"
-                />
-                <textarea
-                  placeholder="Your message"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full p-3 border border-slate-200 rounded-lg text-sm h-24 resize-none"
-                />
-                <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
-                  Submit Inquiry
-                </Button>
-              </form>
+              ))}
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Main Content */}
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* FAQs */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                    <HelpCircle size={20} className="text-white" />
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
+                </div>
+
+                {filteredFaqs.length > 0 ? (
+                  filteredFaqs.map((category, idx) => (
+                    <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                      <div className="bg-gradient-to-r from-slate-50 to-white p-6 border-b border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                            <category.icon size={20} className="text-gray-700" />
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900">{category.category}</h3>
+                        </div>
+                      </div>
+                      
+                      <div className="divide-y divide-gray-100">
+                        {category.questions.map((item, i) => {
+                          const faqId = `${idx}-${i}`
+                          const isOpen = openFaq === faqId
+                          
+                          return (
+                            <div key={i} className="transition-colors hover:bg-gray-50">
+                              <button
+                                onClick={() => setOpenFaq(isOpen ? null : faqId)}
+                                className="w-full text-left p-6 flex items-start justify-between gap-4 cursor-pointer"
+                              >
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 mb-1">{item.q}</h4>
+                                  {isOpen && (
+                                    <p className="text-gray-600 mt-3 leading-relaxed">{item.a}</p>
+                                  )}
+                                </div>
+                                <ChevronDown
+                                  size={20}
+                                  className={`text-gray-400 flex-shrink-0 transition-transform mt-1 ${
+                                    isOpen ? 'rotate-180' : ''
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search size={24} className="text-gray-400" />
+                    </div>
+                    <p className="text-gray-600 font-medium">No results found</p>
+                    <p className="text-sm text-gray-500 mt-1">Try a different search term</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact Form */}
+              <div className="lg:sticky lg:top-24 h-fit">
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-700">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                      <MessageCircle size={20} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Still Need Help?</h3>
+                  </div>
+                  
+                  <p className="text-gray-300 mb-6 text-sm">
+                    Can't find what you're looking for? Send us a message and we'll get back to you within 24 hours.
+                  </p>
+
+                  {submitted && (
+                    <div className="mb-6 p-4 bg-green-500/20 border border-green-500/50 text-green-300 rounded-xl text-sm backdrop-blur-sm">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                        <span className="font-semibold">Message Sent!</span>
+                      </div>
+                      <p className="text-xs text-green-200 ml-7">We'll get back to you soon.</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                      <input
+                        type="text"
+                        placeholder="John Doe"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-400 focus:bg-white/20 outline-none transition-all backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                      <input
+                        type="email"
+                        placeholder="john@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-400 focus:bg-white/20 outline-none transition-all backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Your Message</label>
+                      <textarea
+                        placeholder="Tell us how we can help..."
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-400 focus:bg-white/20 outline-none transition-all h-32 resize-none backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-red-600/50"
+                    >
+                      Send Message
+                    </Button>
+                  </form>
+
+                  <div className="mt-6 pt-6 border-t border-white/10">
+                    <p className="text-xs text-gray-400 text-center">
+                      Average response time: <span className="text-white font-semibold">2-4 hours</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
     </div>
   )
 }
+// Simulate API call
