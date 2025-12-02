@@ -1,16 +1,43 @@
 "use client"
 
+import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Crown, Clock, Zap, MessageCircle, Sparkles } from "lucide-react"; // MessageCircle ikonkasini import qildim
+import { CheckCircle, Crown, Clock, Zap, MessageCircle, Sparkles, LucideProps } from "lucide-react"; 
 import { useRouter } from 'next/navigation';
 
 // 💡 Navigatsiya panelini import qilamiz
 import Navigation from "@/components/navigation"; 
 
 
-// Obuna rejasi turlari (Plan data)
-const plans = [
-    // 🔥 1. FREE PLAN (Bepul Reja) - Voice Chat o'rniga oddiy feature saqlanadi
+// --- TYPE DEFINITIONS (Ma'lumot turlari) ---
+// Lucide ikonka komponentining umumiy turi
+type IconType = ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+
+// Har bir funksiya (feature) ob'ekti uchun interfeys
+interface FeatureType {
+    text: string;
+    limited: boolean;
+    icon: IconType;
+    // Xatolik sababchisi: Bazi funksiyalarda bu maydon bo'lmagani uchun uni ixtiyoriy (?) qilamiz
+    isSoon?: boolean; 
+}
+
+// Har bir reja (plan) ob'ekti uchun interfeys
+interface PlanType {
+    id: string;
+    name: string;
+    price: string;
+    tag: string;
+    features: FeatureType[]; // Features uchun aniq tur
+    style: string;
+    isAnnual?: boolean;
+}
+// --- END TYPE DEFINITIONS ---
+
+
+// Obuna rejasi turlari (Plan data) - PlanType[] turini belgilaymiz
+const plans: PlanType[] = [
+    // 🔥 1. FREE PLAN (Bepul Reja)
     {
         id: 'free',
         name: "Bepul",
@@ -60,7 +87,7 @@ const plans = [
         tag: "Eng ommabop (50% tejash)",
         isAnnual: true,
         features: [
-            // Yangi funksiya (Tez kunda) qo'shildi:
+            // isSoon: true bu yerda mavjud
             { text: "Boshqa studentlar bilan Voice-Chat (Tez Kunda)", limited: true, icon: MessageCircle, isSoon: true }, 
             { text: "Barcha Pro funksiyalari", limited: false, icon: Crown },
             { text: "Yillik 50% chegirma", limited: false, icon: Crown },
@@ -74,6 +101,7 @@ const plans = [
 export default function PremiumPage() {
     const router = useRouter();
     
+    // isAnnual ni boolean turiga majburlash uchun!! operatoridan foydalanamiz
     const handlePurchase = (planId: string, isAnnual: boolean) => {
         // Bepul rejani sotib olish uchun alohida shart
         if (planId === 'free') {
@@ -144,16 +172,17 @@ export default function PremiumPage() {
                                             ) : (
                                                 <feature.icon 
                                                     size={20} 
-                                                    // "Tez Kunda" bo'lsa, uni biroz kulrang qilib qo'yamiz (MessageCircle uchun)
+                                                    // "Tez Kunda" bo'lsa, uni biroz kulrang qilib qo'yamiz
+                                                    // Endi feature.isSoon xato bermaydi, chunki u ixtiyoriy.
                                                     className={feature.isSoon ? "text-slate-400 flex-shrink-0 mt-1" : feature.limited ? "text-red-500 flex-shrink-0 mt-1" : "text-blue-500 flex-shrink-0 mt-1"} 
                                                 />
                                             )}
                                             
                                             <p className={`text-slate-700 ${feature.limited ? 'opacity-70' : ''}`}>
                                                 {feature.text}
-                                                {/* "Tez Kunda" yorlig'i uchun maxsus rang va yozuv */}
+                                                {/* "Tez Kunda" yorlig'i */}
                                                 {feature.isSoon && <span className="text-xs text-slate-500 ml-1 font-semibold"> (Tez Kunda)</span>}
-                                                {/* Oddiy cheklov yorlig'i */}
+                                                {/* Oddiy cheklov yorlig'i (faqat isSoon bo'lmaganida ko'rsatiladi) */}
                                                 {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Limitli)</span>}
                                             </p>
                                         </div>
@@ -180,4 +209,3 @@ export default function PremiumPage() {
         </>
     );
 }
-//chat
