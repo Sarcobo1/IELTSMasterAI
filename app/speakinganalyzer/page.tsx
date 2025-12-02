@@ -56,8 +56,8 @@ export default function SpeakingAnalyzer() {
     const audioCtxRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     
-    // 1. DataArrayRef ni to'g'ri e'lon qilish
-    const dataArrayRef = useRef<Uint8Array | null>(null); 
+    // 1. DataArrayRef ni to'g'ri e'lon qilish va tipini qat'iy belgilash
+    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null); 
 
     const modelLoadedRef = useRef(false);
     const runningRef = useRef(false);
@@ -247,8 +247,8 @@ export default function SpeakingAnalyzer() {
         analyserRef.current.fftSize = 256;
         src.connect(analyserRef.current);
         
-        // 2. Data array ni startda yaratish
-        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount); 
+        // 2. Data array ni startda yaratish va tipini qat'iy belgilash
+        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount) as Uint8Array<ArrayBuffer>; 
 
         // Modellarni yuklash
         if (!modelLoadedRef.current) {
