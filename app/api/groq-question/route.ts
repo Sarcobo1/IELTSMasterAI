@@ -1,88 +1,97 @@
-// app/api/groq-question/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+// app/api/generate-questions/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const url = new URL(request.url)
-    const part = url.searchParams.get('part')
-    const count = parseInt(url.searchParams.get('count') || '10')
+    const { testId, count, part2Topic } = await req.json();
 
-    if (!part) {
-      return NextResponse.json({ error: 'Part is required' }, { status: 400 })
+    if (!testId) {
+      return NextResponse.json({ error: "testId is required" }, { status: 400 });
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY
+    const groqApiKey = process.env.GROQ_API_KEY;
     if (!groqApiKey) {
-      return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 })
+      return NextResponse.json(
+        { error: "GROQ_API_KEY is missing" },
+        { status: 500 }
+      );
     }
 
-    let promptType = ''
-    if (part.startsWith('part-')) {
-      const partNum = part.split('-')[1]
-      if (partNum === '1') {
-        promptType = 'IELTS Speaking Part 1 questions (introduction and interview, simple questions about yourself)'
-      } else if (partNum === '2') {
-        promptType = 'IELTS Speaking Part 2 cues (long turn, describe something with bullet points)'
-      } else if (partNum === '3') {
-        promptType = 'IELTS Speaking Part 3 questions (discussion, abstract ideas)'
-      }
-    } else if (part.startsWith('task-')) {
-      const taskNum = part.split('-')[1]
-      if (taskNum === '1') {
-        promptType = 'IELTS Writing Task 1 prompts (describing charts, graphs, processes, maps)'
-      } else if (taskNum === '2') {
-        promptType = 'IELTS Writing Task 2 opinion essay prompts'
-      } else if (taskNum === '3') {
-        promptType = 'Advanced IELTS-style discussion essay prompts'
-      }
-    } else {
-      return NextResponse.json({ error: 'Invalid part' }, { status: 400 })
+    // Determine prompt type
+    let prompt = "";
+
+    if (testId === "part-1") {
+      prompt = `Generate ${count} IELTS Speaking Part 1 questions. 
+Respond ONLY in JSON: {"questions": ["q1","q2"]}`;
     }
 
-    const prompt = `Generate ${count} random common ${promptType}. Respond in JSON format: {"questions": ["question1", "question2", ...]}`
+    if (testId === "part-2") {
+      prompt = `Generate ${count} IELTS Speaking Part 2 cue cards.
+Respond ONLY in JSON: {"questions": ["topic1"]}`;
+    }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant. Always respond with valid JSON.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-        response_format: { type: 'json_object' }
-      }),
-    })
+    if (testId === "part-3") {
+      prompt = `Generate ${count} IELTS Speaking Part 3 questions.
+Topic base: "${part2Topic}".
+Respond ONLY in JSON: {"questions": ["q1","q2"]}`;
+    }
+
+    // Call Groq API
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${groqApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You generate clean JSON only. Never add explanations or extra text.",
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Groq API error:', errorText)
-      return NextResponse.json({ error: 'Failed to generate questions from Groq AI' }, { status: response.status })
+      const errText = await response.text();
+      console.error("Groq API Error:", errText);
+      return NextResponse.json(
+        { error: "Groq AI request failed" },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
+    const data = await response.json();
+    const jsonText = data?.choices?.[0]?.message?.content;
 
-    if (!content) {
-      return NextResponse.json({ error: 'No response from Groq AI' }, { status: 500 })
+    if (!jsonText) {
+      return NextResponse.json(
+        { error: "Empty AI response" },
+        { status: 500 }
+      );
     }
 
-    const result = JSON.parse(content)
+    // Parse JSON returned by AI
+    const parsed = JSON.parse(jsonText);
 
-    return NextResponse.json(result)
-  } catch (error: any) {
-    console.error('Error in groq-question API:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    // Final return
+    return NextResponse.json({
+      questions: parsed.questions || [],
+      topic: parsed.topic || part2Topic || null,
+    });
+  } catch (err: any) {
+    console.error("generate-questions API error:", err);
+    return NextResponse.json(
+      { error: err.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }

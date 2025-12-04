@@ -33,21 +33,20 @@ Please analyze and provide scores (1-9 band) for:
 1. **Fluency and Coherence**: Flow of speech, hesitations, self-correction, logical sequencing
 2. **Lexical Resource**: Vocabulary range, precision, appropriateness, and flexibility
 3. **Grammatical Range and Accuracy**: Variety of structures, accuracy, complexity
-4. **Pronunciation**: Clarity, stress, rhythm, intonation
+
+Note: Do not score pronunciation as it requires audio; focus on text-based criteria.
 
 Respond in JSON format:
 {
   "scores": {
     "fluency": <number 1-9>,
     "vocabulary": <number 1-9>,
-    "grammar": <number 1-9>,
-    "pronunciation": <number 1-9>
+    "grammar": <number 1-9>
   },
   "feedback": {
     "fluency": "<specific feedback>",
     "vocabulary": "<specific feedback>",
     "grammar": "<specific feedback>",
-    "pronunciation": "<specific feedback>",
     "overall": "<overall assessment>"
   },
   "strengths": ["<strength 1>", "<strength 2>", ...],

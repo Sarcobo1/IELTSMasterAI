@@ -15,44 +15,56 @@ import {
   Layers,
   Zap,
   HelpCircle,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react"
 
 // =========================================================
-// ВОПРОСЫ
+// AI GENERATION FUNCTION
 // =========================================================
-const PART1_QUESTIONS = [
-  "Describe your hometown. What is the most interesting thing about it?",
-  "Tell me about your favorite book or movie and why you like it.",
-  "What is your dream job, and what steps are you taking to achieve it?",
-  "Do you prefer living in the city or the countryside? Explain why.",
-  "What kind of food do you enjoy eating, and do you like cooking?",
-]
+async function generateQuestionsWithAI(testId: string, count: number, part2Topic?: string): Promise<string[]> {
+  try {
+    const res = await fetch("/api/groq-question", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ testId, count, part2Topic }),
+    })
 
-const PART2_QUESTIONS = [
-  "Describe a time when you faced a difficult challenge and how you overcame it. You should say: what the challenge was, how you dealt with it, and what you learned.",
-  "Describe a person who has had a significant influence on your life. You should say: who this person is, how you know them, and why they are important to you.",
-  "Describe a memorable trip or holiday you have taken. You should say: where you went, who you went with, and what made it memorable.",
-  "Talk about a recent piece of news or a current event that caught your attention. You should say: what it was about, why it interested you, and how it affects people.",
-]
+    if (!res.ok) {
+      const txt = await res.text()
+      throw new Error("AI question generation error: " + txt)
+    }
 
-const PART3_QUESTIONS = [
-  "What are the benefits of learning a second language? Do you think everyone should learn one?",
-  "How important is technology in modern education? What are the advantages and disadvantages?",
-  "Do you think social media is a good thing or a bad thing? Why? How has it changed communication?",
-  "What is the best way for people to stay healthy? Should governments do more to promote health?",
-  "Describe a popular festival or celebration in your country. How does it bring people together?",
-]
+    const data = await res.json()
+    return data.questions
+  } catch (e) {
+    console.error(e)
+    return [] // Fallback to empty if error
+  }
+}
 
-function getQuestionsForTest(testId: string): string[] {
+// =========================================================
+// GET QUESTIONS (AI GENERATED)
+let currentPart2Topic = ""
+
+function getQuestionsForTest(testId: string): Promise<string[]> {
   switch (testId) {
     case "part-1":
-      return PART1_QUESTIONS
+      return generateQuestionsWithAI("part-1", 5)
     case "part-2":
-      return PART2_QUESTIONS
+      return generateQuestionsWithAI("part-2", 1).then(questions => {
+        if (questions.length > 0) {
+          // Extract topic from cue card for Part 3
+          currentPart2Topic = questions[0].split("\n")[0].replace("Describe ", "").trim()
+        }
+        return questions
+      })
     case "part-3":
-      return PART3_QUESTIONS
+      // Use currentPart2Topic if available, else generate generic
+      return generateQuestionsWithAI("part-3", 4, currentPart2Topic || undefined)
     default:
       notFound()
+      return Promise.resolve([])
   }
 }
 
@@ -72,9 +84,10 @@ function getTestTitle(testId: string): string {
 export default function SpeakingTestPage() {
   const params = useParams()
   const testId = params.testId as string
-  const questions = getQuestionsForTest(testId)
   const testTitle = getTestTitle(testId)
 
+  const [questions, setQuestions] = useState<string[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [currentTranscript, setCurrentTranscript] = useState("")
@@ -83,6 +96,9 @@ export default function SpeakingTestPage() {
   const [checking, setChecking] = useState(false)
   const [grammarResult, setGrammarResult] = useState<any>(null)
   const [logicResult, setLogicResult] = useState<any>(null)
+  const [feedback, setFeedback] = useState<any>({})
+  const [strengths, setStrengths] = useState<string[]>([])
+  const [improvements, setImprovements] = useState<string[]>([])
   const [showResults, setShowResults] = useState(false)
   const [scores, setScores] = useState({
     fluency: 0,
@@ -94,6 +110,16 @@ export default function SpeakingTestPage() {
   const recognitionRef = useRef<any>(null)
   const recognitionBufferRef = useRef<string>("")
   const confidencesRef = useRef<number[]>([])
+
+  // =========================================================
+  // LOAD QUESTIONS ON MOUNT
+  // =========================================================
+  useEffect(() => {
+    setLoadingQuestions(true)
+    getQuestionsForTest(testId)
+      .then(setQuestions)
+      .finally(() => setLoadingQuestions(false))
+  }, [testId])
 
   // =========================================================
   // LOCAL STORAGE
@@ -201,32 +227,6 @@ export default function SpeakingTestPage() {
   }
 
   // =========================================================
-  // GRAMMAR CHECK (HF)
-  // =========================================================
-  async function checkGrammarWithHF(text: string) {
-    const res = await fetch("/api/grammar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userText: text }),
-    })
-
-    if (!res.ok) {
-      const txt = await res.text()
-      throw new Error("HF Grammar error: " + txt)
-    }
-    const data = await res.json()
-
-    const matches = data.corrections.map((c: any) => ({
-      message: c.explanation,
-      replacements: [c.corrected],
-      rule: "Grammar/Style",
-      context: c.original,
-    }))
-
-    return { matches }
-  }
-
-  // =========================================================
   // LOGIC / FLUENCY ANALYSIS
   // =========================================================
   function analyzeLogic(text: string) {
@@ -303,8 +303,18 @@ export default function SpeakingTestPage() {
     setChecking(true)
     setGrammarResult(null)
     setLogicResult(null)
+    setFeedback({})
+    setStrengths([])
+    setImprovements([])
 
     try {
+      // Calculate local pronunciation score
+      let avgConfidence = 0
+      if (confidencesRef.current.length > 0) {
+        avgConfidence = confidencesRef.current.reduce((a, b) => a + b, 0) / confidencesRef.current.length
+      }
+      const pronunciationScore = avgConfidence > 0 ? Number((avgConfidence * 9).toFixed(1)) : 5.0 // Default to 5 if no confidence
+
       const question = questions[currentQuestionIndex]
       const groqRes = await fetch("/api/groq-score", {
         method: "POST",
@@ -319,7 +329,7 @@ export default function SpeakingTestPage() {
 
       const groqResult = await groqRes.json()
 
-      // Adapt grammar errors to match the existing grammarResult format
+      // Adapt grammar errors
       const adaptedMatches = (groqResult.grammarErrors || []).map((e: any) => ({
         message: e.explanation,
         replacements: [e.correction],
@@ -331,13 +341,18 @@ export default function SpeakingTestPage() {
       const logic = analyzeLogic(text)
       setLogicResult(logic)
 
-      // Use Groq scores
+      // Set scores (pronunciation local, others from Groq)
       setScores({
         fluency: Number(groqResult.scores.fluency.toFixed(1)),
-        pronunciation: Number(groqResult.scores.pronunciation.toFixed(1)),
+        pronunciation: pronunciationScore,
         grammar: Number(groqResult.scores.grammar.toFixed(1)),
         vocabulary: Number(groqResult.scores.vocabulary.toFixed(1)),
       })
+
+      // Set additional Groq data
+      setFeedback(groqResult.feedback || {})
+      setStrengths(groqResult.strengths || [])
+      setImprovements(groqResult.improvements || [])
 
       setShowResults(true)
     } catch (e: any) {
@@ -353,6 +368,9 @@ export default function SpeakingTestPage() {
     setCurrentTranscript("")
     setGrammarResult(null)
     setLogicResult(null)
+    setFeedback({})
+    setStrengths([])
+    setImprovements([])
     setScores({ fluency: 0, pronunciation: 0, grammar: 0, vocabulary: 0 })
     setShowResults(false)
     setRecordingTime(0)
@@ -364,9 +382,30 @@ export default function SpeakingTestPage() {
     setCurrentQuestionIndex((prev) => (prev + 1) % questions.length)
   }
 
+  const regenerateQuestions = async () => {
+    setLoadingQuestions(true)
+    const newQuestions = await getQuestionsForTest(testId)
+    setQuestions(newQuestions)
+    setCurrentQuestionIndex(0)
+    retryQuestion()
+    setLoadingQuestions(false)
+  }
+
   // =========================================================
   // RENDER
   // =========================================================
+  if (loadingQuestions) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
+        <Navigation />
+        <main className="flex-grow flex items-center justify-center">
+          <p className="text-white text-xl">Loading AI-generated questions...</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   if (showResults) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
@@ -429,10 +468,10 @@ export default function SpeakingTestPage() {
                 <HelpCircle size={20} className="mr-2" /> How Scores Are Calculated
               </h4>
               <ul className="list-disc pl-5 space-y-2 text-sm text-gray-300">
-                <li><b>Fluency</b>: Based on fillers and recording length.</li>
-                <li><b>Pronunciation</b>: Browser speech confidence.</li>
-                <li><b>Grammar</b>: Number of detected errors.</li>
-                <li><b>Vocabulary</b>: Word variety and lexical density.</li>
+                <li><b>Fluency</b>: AI analysis of flow, hesitations, and coherence (plus local fillers detection).</li>
+                <li><b>Pronunciation</b>: Based on browser speech recognition confidence scores.</li>
+                <li><b>Grammar</b>: AI-detected errors and range/accuracy.</li>
+                <li><b>Vocabulary</b>: AI analysis of range and precision (plus local variety metrics).</li>
               </ul>
               <p className="text-xs text-gray-400 mt-4">
                 Scores are estimates — real IELTS uses human examiners.
@@ -441,7 +480,7 @@ export default function SpeakingTestPage() {
 
             {/* Detailed feedback */}
             <h2 className="text-2xl font-semibold text-white mb-4 mt-8">Detailed Feedback</h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Grammar */}
               {grammarResult && (
                 <div className="bg-slate-800 p-5 rounded-xl border border-red-500/50">
@@ -512,6 +551,69 @@ export default function SpeakingTestPage() {
               )}
             </div>
 
+            {/* AI Feedback Sections */}
+            <h2 className="text-2xl font-semibold text-white mb-4">AI Examiner Feedback</h2>
+            <div className="space-y-6 mb-8">
+              {/* Strengths */}
+              {strengths.length > 0 && (
+                <div className="bg-slate-800 p-5 rounded-xl border border-green-500/50">
+                  <h4 className="font-bold text-lg mb-3 text-green-300 flex items-center">
+                    <CheckCircle size={20} className="mr-2" /> Strengths
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-2 text-sm text-gray-200">
+                    {strengths.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Improvements */}
+              {improvements.length > 0 && (
+                <div className="bg-slate-800 p-5 rounded-xl border border-yellow-500/50">
+                  <h4 className="font-bold text-lg mb-3 text-yellow-300 flex items-center">
+                    <AlertCircle size={20} className="mr-2" /> Areas for Improvement
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-2 text-sm text-gray-200">
+                    {improvements.map((imp, i) => (
+                      <li key={i}>{imp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Detailed Feedback */}
+              {Object.keys(feedback).length > 0 && (
+                <div className="bg-slate-800 p-5 rounded-xl border border-blue-500/50">
+                  <h4 className="font-bold text-lg mb-3 text-blue-300 flex items-center">
+                    <MessageSquare size={20} className="mr-2" /> Detailed Category Feedback
+                  </h4>
+                  <div className="space-y-4 text-sm text-gray-200">
+                    {feedback.fluency && (
+                      <div>
+                        <b className="text-yellow-300">Fluency:</b> {feedback.fluency}
+                      </div>
+                    )}
+                    {feedback.vocabulary && (
+                      <div>
+                        <b className="text-green-300">Vocabulary:</b> {feedback.vocabulary}
+                      </div>
+                    )}
+                    {feedback.grammar && (
+                      <div>
+                        <b className="text-blue-300">Grammar:</b> {feedback.grammar}
+                      </div>
+                    )}
+                    {feedback.overall && (
+                      <div className="mt-4">
+                        <b className="text-purple-300">Overall:</b> {feedback.overall}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Buttons */}
             <div className="bg-slate-700 rounded-xl p-6 sm:p-8 text-center mt-12 border border-slate-600">
               <div className="flex gap-3 flex-col sm:flex-row">
@@ -520,6 +622,9 @@ export default function SpeakingTestPage() {
                 </Button>
                 <Button onClick={nextQuestion} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3">
                   Next Question (Q{currentQuestionIndex + 2 > questions.length ? 1 : currentQuestionIndex + 2})
+                </Button>
+                <Button onClick={regenerateQuestions} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3">
+                  Regenerate New Questions
                 </Button>
               </div>
             </div>
@@ -549,8 +654,8 @@ export default function SpeakingTestPage() {
               <p className="text-xs uppercase text-blue-400 font-bold mb-2">
                 Question {currentQuestionIndex + 1} / {questions.length}
               </p>
-              <p className="text-xl sm:text-2xl text-gray-100 font-semibold italic">
-                "{questions[currentQuestionIndex]}"
+              <p className="text-xl sm:text-2xl text-gray-100 font-semibold italic whitespace-pre-line">
+                {questions[currentQuestionIndex]}
               </p>
             </div>
 

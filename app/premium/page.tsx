@@ -21,7 +21,7 @@ interface FeatureType {
     // Xatolik sababchisi: Bazi funksiyalarda bu maydon bo'lmagani uchun uni ixtiyoriy (?) qilamiz
     isSoon?: boolean; 
 }
-
+//(Limitli)
 // Har bir reja (plan) ob'ekti uchun interfeys
 interface PlanType {
     id: string;
@@ -44,10 +44,10 @@ const plans: PlanType[] = [
         price: "$0",
         tag: "Dastlabki sinov",
         features: [
-            { text: "Speaking Analyzer: Cheklangan foydalanish (Haftasiga 1 ta so'rov)", limited: true, icon: Clock },
-            { text: "Writing: Cheklangan AI baholash (Haftasiga 3 ta insho)", limited: true, icon: Clock },
-            { text: "Tanlangan mavzular bo'yicha cheklangan testlar", limited: true, icon: Clock },
-            { text: "Grammar Tutor: Asosiy maslahatlar", limited: false, icon: CheckCircle },
+            { text: "Hozircha hammasi tekin", limited: true, icon: Clock },
+            { text: "Hozirda hammasi tekin", limited: true, icon: Clock },
+            { text: "Hozirda hammasi tekin", limited: true, icon: Clock },
+            { text: "Hozirda hammasi tekin", limited: false, icon: CheckCircle },
         ],
         style: "bg-white border-2 border-gray-300 hover:border-gray-500"
     },
@@ -145,7 +145,7 @@ export default function PremiumPage() {
                         {plans.map((plan) => (
                             <div 
                                 key={plan.id}
-                                className={`relative p-8 rounded-2xl shadow-xl flex flex-col transition-all duration-300 ${plan.style} ${plan.id === 'free' ? 'shadow-md hover:shadow-lg' : ''}`}
+                                className={`relative p-8 rounded-2xl shadow-xl flex flex-col transition-all duration-300 ${plan.style} ${plan.id === 'free' ? 'shadow-md hover:shadow-lg' : 'opacity-50 backdrop-blur-sm'}`}
                             >
                                 {/* Ommaboplik yorlig'i */}
                                 {plan.isAnnual && (
@@ -183,7 +183,7 @@ export default function PremiumPage() {
                                                 {/* "Tez Kunda" yorlig'i */}
                                                 {feature.isSoon && <span className="text-xs text-slate-500 ml-1 font-semibold"> (Tez Kunda)</span>}
                                                 {/* Oddiy cheklov yorlig'i (faqat isSoon bo'lmaganida ko'rsatiladi) */}
-                                                {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Limitli)</span>}
+                                                {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Tekin)</span>}
                                             </p>
                                         </div>
                                     ))}
@@ -201,6 +201,13 @@ export default function PremiumPage() {
                                 >
                                     {plan.id === 'free' ? 'Bepul Boshlash' : 'Sotib olish'}
                                 </Button>
+
+                                {/* Premium cardlar uchun overlay bilan "TEZ KUNDA" */}
+                                {plan.id !== 'free' && (
+                                    <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex items-center justify-center z-10">
+                                        <h2 className="text-5xl font-extrabold text-red-600 transform rotate-[-15deg] opacity-90">TEZ KUNDA</h2>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
