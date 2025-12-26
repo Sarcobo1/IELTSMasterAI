@@ -149,26 +149,26 @@ export default function SpeakingAnalyzerPage() {
         }
     };
 
-    const computeVolume = () => {
-        const analyser = analyserRef.current;
-        const dataArray = dataArrayRef.current;
+   const computeVolume = () => {
+    const analyser = analyserRef.current;
+    const dataArray = dataArrayRef.current;
 
-        if (!analyser || !dataArray) {
-            currentScoresRef.current.volume = 0;
-            setVolumeScore(0);
-            return;
-        }
+    if (!analyser || !dataArray) {
+        currentScoresRef.current.volume = 0;
+        setVolumeScore(0);
+        return;
+    }
 
-        // TypeScript now knows dataArray is definitely Uint8Array here
-        analyser.getByteFrequencyData(dataArray);
+    // @ts-ignore - Web Audio API type compatibility
+    analyser.getByteFrequencyData(dataArray);
 
-        const avg = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
-        let volume = Math.floor((avg / 255) * 100 * 1.5);
-        volume = Math.min(100, volume);
+    const avg = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
+    let volume = Math.floor((avg / 255) * 100 * 1.5);
+    volume = Math.min(100, volume);
 
-        currentScoresRef.current.volume = volume;
-        setVolumeScore(volume);
-    };
+    currentScoresRef.current.volume = volume;
+    setVolumeScore(volume);
+};
 
     const computeScores = (face: FaceLandmarkerResult | null, hands: HandLandmarkerResult | null) => {
         const lm = face?.faceLandmarks?.[0];

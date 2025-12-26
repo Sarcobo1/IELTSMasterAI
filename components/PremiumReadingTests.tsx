@@ -1,5 +1,9 @@
+// components/PremiumReadingTests.tsx
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { useUserStatus } from '../context/UserStatusContext'; 
+import { useUserStatus } from '../context/UserStatusContext';
+import { useAuth } from '@/context/AuthContext'; // ✅ Qo'shildi
 
 interface ReadingTest {
     id: number;
@@ -8,7 +12,10 @@ interface ReadingTest {
 }
 
 const PremiumReadingTests: React.FC = () => {
-    const { isPremium, isAuthenticated, isLoading } = useUserStatus();
+    // ✅ isAuthenticated va isLoading useAuth dan olinadi
+    const { isPremium } = useUserStatus();
+    const { isAuthenticated, isLoading } = useAuth();
+    
     const [tests, setTests] = useState<ReadingTest[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 

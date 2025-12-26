@@ -6,8 +6,10 @@ export interface IUser extends Document {
     password: string;
     isPremium: boolean;
     premiumExpiresAt?: Date;
-    planId?: string; // ✅ Yangi maydon qo'shildi
+    planId?: string;
     role: 'user' | 'admin';
+    uploadCount: number;        // ✅ Yuklash hisoblagichi
+    lastUploadDate?: Date;      // ✅ Oxirgi yuklash sanasi
     createdAt: Date;
     updatedAt: Date;
 }
@@ -19,6 +21,7 @@ const UserSchema: Schema = new Schema({
         unique: true,
         lowercase: true,
         trim: true
+        // ❌ index: true ni olib tashladik
     },
     password: { 
         type: String, 
@@ -32,7 +35,6 @@ const UserSchema: Schema = new Schema({
         type: Date,
         default: null
     },
-    // ✅ YANGI MAYDON - Obuna reja ID si
     planId: {
         type: String,
         enum: ['free', 'premium_monthly', 'premium_pro_monthly', 'premium_pro_annual'],
@@ -42,12 +44,22 @@ const UserSchema: Schema = new Schema({
         type: String, 
         enum: ['user', 'admin'], 
         default: 'user' 
+    },
+    // ✅ YANGI MAYDONLAR - Yuklash limiti uchun
+    uploadCount: {
+        type: Number,
+        default: 0
+    },
+    lastUploadDate: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 
 // Index qo'shish (performance uchun)
-UserSchema.index({ email: 1 });
+// ❌ email indexini olib tashladik (unique: true o'zi index yaratadi)
 UserSchema.index({ isPremium: 1, premiumExpiresAt: 1 });
+UserSchema.index({ lastUploadDate: 1 }); // ✅ Yangi index
 
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 

@@ -1,57 +1,95 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+// context/UserStatusContext.tsx
+"use client";
 
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext'; // ✅ AuthContext dan isAuthenticated olish
+
+// User status type
 interface UserStatus {
     isPremium: boolean;
-    remainingUploads: number;
-    totalLimit: number;
-    isAuthenticated: boolean;
-    isLoading: boolean;
+    usageCount: number;
+    dailyLimit: number;
+    lastUsageDate?: string;
+    remainingUploads: number;    // ✅ Qo'shildi
+    totalLimit: number;           // ✅ Qo'shildi
 }
 
-// ✅ YANGI: Context Endi Funksiya (Dispatch) ni ham O'z Ichiga Oladi
+// Context type
 interface UserContextType extends UserStatus {
-    // Funksiyani qo'shamiz
-    updateRemainingUploads: (newRemaining: number) => void; 
+    isAuthenticated: boolean;     // ✅ Qo'shildi
+    isLoading: boolean;           // ✅ Qo'shildi
+    updateStatus: (newStatus: Partial<UserStatus>) => void;
+    updateRemainingUploads: (remaining: number) => void; // ✅ Qo'shildi
 }
 
-const defaultStatus: UserContextType = {
+// Default qiymatlar
+const defaultStatus: UserStatus = {
     isPremium: false,
-    remainingUploads: 0,
-    totalLimit: 0,
-    isAuthenticated: false,
-    isLoading: true,
-    updateRemainingUploads: () => {}, // Standart bo'sh funksiya
+    usageCount: 0,
+    dailyLimit: 3,
+    remainingUploads: 5,
+    totalLimit: 5,
 };
 
-const UserStatusContext = createContext<UserContextType>(defaultStatus);
+const UserStatusContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserStatusProvider: React.FC = ({ children }) => {
+// ✅ To'g'ri - children prop type bilan
+interface UserStatusProviderProps {
+    children: ReactNode;
+}
+
+export const UserStatusProvider: React.FC<UserStatusProviderProps> = ({ children }) => {
+    const { isAuthenticated, isLoading, user } = useAuth(); // ✅ AuthContext dan
     const [status, setStatus] = useState<UserStatus>(defaultStatus);
 
-    // Yangilash funksiyasi (Callback orqali optimallashtirilgan)
-    const updateRemainingUploads = useCallback((newRemaining: number) => {
-        setStatus(prev => ({
-            ...prev,
-            remainingUploads: newRemaining,
-        }));
-    }, []);
+    // ✅ User ma'lumotlari o'zgarganda status yangilanadi
+    useEffect(() => {
+        if (user) {
+            setStatus((prev) => ({
+                ...prev,
+                isPremium: user.isPremium || false,
+                totalLimit: user.isPremium ? 50 : 5,
+                // remainingUploads backenddan kelishi kerak
+            }));
+        }
+    }, [user]);
 
-    // ... (useEffect ichidagi fetchStatus mantig'i o'zgarishsiz qoladi) ...
-    // ... (To'liq fetchStatus funksiyasini oldingi javobingizdan ko'chirib oling) ...
-    
-    // Yengillangan Context qiymati
-    const contextValue = {
-        ...status,
-        updateRemainingUploads, // Funksiyani Context'ga qo'shish
+    // Yangilash funksiyasi
+    const updateStatus = (newStatus: Partial<UserStatus>) => {
+        setStatus((prevStatus) => ({
+            ...prevStatus,
+            ...newStatus,
+        }));
     };
 
+    // ✅ Qolgan yuklashlarni yangilash funksiyasi
+    const updateRemainingUploads = (remaining: number) => {
+        setStatus((prevStatus) => ({
+            ...prevStatus,
+            remainingUploads: remaining,
+        }));
+    };
 
     return (
-        // Endi contextValue Type'i UserContextType ga mos keladi
-        <UserStatusContext.Provider value={contextValue}>
+        <UserStatusContext.Provider
+            value={{
+                ...status,
+                isAuthenticated,
+                isLoading,
+                updateStatus,
+                updateRemainingUploads,
+            }}
+        >
             {children}
         </UserStatusContext.Provider>
     );
 };
 
-export const useUserStatus = () => useContext(UserStatusContext);
+// Custom hook
+export const useUserStatus = () => {
+    const context = useContext(UserStatusContext);
+    if (!context) {
+        throw new Error('useUserStatus must be used within UserStatusProvider');
+    }
+    return context;
+};

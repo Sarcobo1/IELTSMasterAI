@@ -46,8 +46,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
 
             // Muvaffaqiyatli javob
             if (isLogin) {
-                // Tizimga kirish muvaffaqiyatli
-                login({ id: data.user.id, email: data.user.email }); 
+                // ✅ Token yuborish (object emas!)
+                if (!data.token) {
+                    setError("Server token qaytarmadi");
+                    return;
+                }
+                
+                await login(data.token); // ✅ To'g'ri - string token
                 onSuccess();
             } else {
                 // Ro'yxatdan o'tish muvaffaqiyatli

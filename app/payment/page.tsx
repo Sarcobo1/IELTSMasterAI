@@ -1,6 +1,7 @@
+// app/payment/page.tsx
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Crown, Zap, Clock, Send, Copy } from "lucide-react";
@@ -62,7 +63,8 @@ const buildTelegramUrl = (planId: string) => {
     return `https://t.me/${ADMIN_TELEGRAM.replace("@", "")}?text=${text}`;
 };
 
-export default function PaymentPage() {
+// ✅ Asosiy komponent - Suspense ichida
+function PaymentContent() {
     const params = useSearchParams();
     const router = useRouter();
     const planId = params.get("plan") || "premium_monthly";
@@ -128,3 +130,15 @@ export default function PaymentPage() {
     );
 }
 
+// ✅ Export default - Suspense bilan
+export default function PaymentPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <PaymentContent />
+        </Suspense>
+    );
+}
