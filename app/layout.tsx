@@ -7,14 +7,29 @@ import "./globals.css";
 
 export const metadata: Metadata = {
     title: "IELTS MasterAI",
-    description: "Ielts Practice",
+    description: "Ielts Practice with AI tools",
+    // Mana bu qator har qanday avtomatik generator nomini "yopib" yuboradi:
+    generator: "Next.js",
+    applicationName: "IELTS MasterAI",
+    // Ijtimoiy tarmoqlar uchun maxsus:
+    openGraph: {
+        title: "IELTS MasterAI",
+        description: "Ielts Practice with AI tools",
+        type: "website",
+        siteName: "IELTS MasterAI",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "IELTS MasterAI",
+        description: "Ielts Practice with AI tools",
+    },
 };
-
 export default function RootLayout({
     children,
 }: {
     children: React.ReactNode;
-}) {
+})
+ {
     return (
         <html lang="en">
             <head>
