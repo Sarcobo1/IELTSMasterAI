@@ -11,14 +11,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter();
 
-  // Check for token and redirect if logged in
+  // Check current session via API (cookie-based)
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    if (token) {
-      router.replace('/'); // Use replace to avoid history stack issues
-    }
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            router.replace('/');
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        setChecking(false);
+      }
+    };
+    checkSession();
   }, [router]);
 
   const handleLogin = async () => {
@@ -32,7 +46,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,11 +57,9 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('userToken', data.token);
-        localStorage.setItem('userEmail', email);
-        router.replace('/') // Use replace for smoother redirect
+        router.replace('/') // cookie set by API
       } else {
-        setError(data.message || "Invalid email or password")
+        setError(data.error || data.message || "Invalid email or password")
       }
     } catch (err) {
       setError("Server error occurred. Please try again.")
@@ -99,10 +111,10 @@ export default function LoginPage() {
 
           <Button
             onClick={handleLogin}
-            disabled={loading}
+            disabled={loading || checking}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold text-sm sm:text-base mb-6"
           >
-            {loading ? "Logging in..." : "Login"}
+            {checking ? "Checking session..." : loading ? "Logging in..." : "Login"}
           </Button>
 
         </div>

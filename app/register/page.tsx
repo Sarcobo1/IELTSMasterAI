@@ -12,14 +12,28 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter();
 
-  // Check for token and redirect if logged in
+  // Check current session via API (cookie-based)
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    if (token) {
-      router.replace('/');
-    }
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            router.replace('/');
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        setChecking(false);
+      }
+    };
+    checkSession();
   }, [router]);
 
   const handleRegister = async () => {
@@ -39,7 +53,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +66,7 @@ export default function RegisterPage() {
       if (response.ok) {
         router.replace('/login') // Direct redirect to login
       } else {
-        setError(data.message || "Registration failed")
+        setError(data.error || data.message || "Registration failed")
       }
     } catch (err) {
       setError("Server error occurred. Please try again.")
@@ -115,10 +129,10 @@ export default function RegisterPage() {
 
           <Button
             onClick={handleRegister}
-            disabled={loading}
+            disabled={loading || checking}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold text-sm sm:text-base mb-6"
           >
-            {loading ? "Registering..." : "Register"}
+            {checking ? "Checking session..." : loading ? "Registering..." : "Register"}
           </Button>
 
         </div>

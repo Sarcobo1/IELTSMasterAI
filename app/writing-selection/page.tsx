@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { PenTool, Clock, FileText, Edit, TrendingUp } from "lucide-react"
 
@@ -14,7 +14,6 @@ export default function WritingSelectionPage() {
       title: "Task 1",
       subtitle: "Describing a Chart",
       level: "Beginner",
-      duration: 20,
       description: "Grafik, jadval yoki diagrammani tahlil qiling va asosiy ma'lumotlarni tasvirlab yozing.",
       wordCount: 150,
       icon: "📊",
@@ -26,7 +25,6 @@ export default function WritingSelectionPage() {
       title: "Task 2",
       subtitle: "Opinion Essay",
       level: "Intermediate",
-      duration: 40,
       description: "Berilgan mavzu bo'yicha o'z fikringizni bildiring va dalillar bilan asoslang.",
       wordCount: 250,
       icon: "💭",
@@ -38,7 +36,6 @@ export default function WritingSelectionPage() {
       title: "Task 3",
       subtitle: "Advanced Discussion",
       level: "Advanced",
-      duration: 50,
       description: "Murakkab mavzuda har tomonlama tahlil va chuqur muhokama yozing.",
       wordCount: 300,
       icon: "🎯",
@@ -49,7 +46,7 @@ export default function WritingSelectionPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-grow py-12 sm:py-16 md:py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -111,10 +108,6 @@ export default function WritingSelectionPage() {
 
                   {/* Details */}
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Clock size={16} className="text-blue-500" />
-                      <span className="font-medium">{test.duration} minutes</span>
-                    </div>
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <FileText size={16} className="text-purple-500" />
                       <span className="font-medium">Min. {test.wordCount} words</span>

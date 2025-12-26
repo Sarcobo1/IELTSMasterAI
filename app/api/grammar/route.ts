@@ -8,7 +8,7 @@ const GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const groqApiKey = process.env.GROQ_API_KEY;
 
 // For image analysis, use Gemini 2.0 Flash (multimodal, stable, supports vision/OCR)
-const GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 // Simple in-memory rate limiter
@@ -155,7 +155,7 @@ Respond with ONLY a valid JSON object in this format:
     console.error(`Gemini Vision Error (${response.status}):`, errorText);
     
     if (response.status === 404) {
-      throw new Error("Model topilmadi. GEMINI_VISION_URL ni 'gemini-2.0-flash' ga o'zgartiring (1.5 eskirgan).");
+      throw new Error("Model topilmadi. GEMINI_VISION_URL ni 'gemini-2.5-flash' ga o'zgartiring (1.5 eskirgan).");
     }
     if (response.status === 429) {
       throw new Error("Gemini image limit oshib ketdi. Iltimos, keyinroq urinib ko'ring yoki yangi API key oling.");

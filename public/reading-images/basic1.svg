@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Reading illustration placeholder</title>
+  <desc id="desc">Simple placeholder image for reading passages.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e0f2fe"/>
+      <stop offset="1" stop-color="#c7d2fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#g)" rx="24" ry="24"/>
+  <rect x="60" y="70" width="520" height="190" rx="18" ry="18" fill="#fff" stroke="#d4d4d8" stroke-width="3"/>
+  <rect x="90" y="105" width="460" height="24" rx="6" ry="6" fill="#e0f2fe"/>
+  <rect x="90" y="145" width="320" height="18" rx="5" ry="5" fill="#e5e7eb"/>
+  <rect x="90" y="175" width="380" height="18" rx="5" ry="5" fill="#e5e7eb"/>
+  <rect x="90" y="205" width="280" height="18" rx="5" ry="5" fill="#e5e7eb"/>
+  <circle cx="110" cy="280" r="22" fill="#38bdf8"/>
+  <rect x="150" y="264" width="360" height="32" rx="10" ry="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="170" y="286" font-family="Arial, sans-serif" font-size="16" fill="#475569">Insert your real image at /public/reading-images</text>
+</svg>
+

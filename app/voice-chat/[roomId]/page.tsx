@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Mic, MicOff, User, Plus, Headset, Crown, Check, X } from 'lucide-react';
-import Navigation from "@/components/navigation";
+// import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button"; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useParams } from 'next/navigation';
@@ -314,7 +314,7 @@ export default function VoiceChatPage() {
     // --- RENDERING ---
     return (
         <>
-            <Navigation /> 
+            {/* <Navigation />  */}
             
             {/* ... (Divlar va Sarlavhalar o'zgarishsiz) ... */}
             <div className="min-h-screen bg-white py-12 px-4 pt-20 flex flex-col items-start lg:items-center">

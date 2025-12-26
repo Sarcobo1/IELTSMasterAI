@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { notFound } from "next/navigation"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import {
   Mic,
@@ -397,7 +397,7 @@ export default function SpeakingTestPage() {
   if (loadingQuestions) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-grow flex items-center justify-center">
           <p className="text-white text-xl">Loading AI-generated questions...</p>
         </main>
@@ -409,7 +409,7 @@ export default function SpeakingTestPage() {
   if (showResults) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
-        <Navigation />
+        {/* <Navigation /> */}
 
         <main className="flex-grow py-8 sm:py-10 md:py-10 px-3 sm:px-6 lg:px-8 flex items-start justify-center">
           <div className="max-w-4xl w-full">
@@ -641,7 +641,7 @@ export default function SpeakingTestPage() {
   // =========================================================
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-grow py-8 sm:py-12 px-3 sm:px-6 lg:px-8 flex justify-center">
         <div className="max-w-3xl w-full text-center text-white">

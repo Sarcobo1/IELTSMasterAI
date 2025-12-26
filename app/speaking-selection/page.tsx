@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Clock, MessageSquare, Mic, Users } from "lucide-react"
@@ -13,7 +13,7 @@ export default function SpeakingSelectionPage() {
       title: "Part 1",
       subtitle: "Introduction & Interview",
       level: "Beginner",
-      duration: 5,
+      duration: 1,
       description: "Oddiy savollar, o‘zingiz haqingizda gapirish va intervyu shaklidagi muloqot.",
       icon: "💬",
       color: "from-blue-500 to-cyan-500",
@@ -24,7 +24,7 @@ export default function SpeakingSelectionPage() {
       title: "Part 2",
       subtitle: "Cue Card",
       level: "Intermediate",
-      duration: 3,
+      duration: "1.30",
       description: "Berilgan mavzu bo‘yicha 1-2 daqiqa davomida uzluksiz gapiring.",
       icon: "🎤",
       color: "from-purple-500 to-pink-500",
@@ -35,7 +35,7 @@ export default function SpeakingSelectionPage() {
       title: "Part 3",
       subtitle: "Discussion",
       level: "Advanced",
-      duration: 4,
+      duration: 2,
       description: "Murakkab mavzular bo‘yicha chuqur tahliliy savollarga javob bering.",
       icon: "🧠",
       color: "from-orange-500 to-red-500",
@@ -45,7 +45,7 @@ export default function SpeakingSelectionPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-grow py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">

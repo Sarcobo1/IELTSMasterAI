@@ -17,6 +17,11 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    // ✅ Next.js uchun types
+    "types": [
+      "node"
+      // "express" ni OLIB TASHLANG - Next.js Express ishlatmaydi
+    ],
     "plugins": [
       {
         "name": "next"
@@ -32,10 +37,10 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "types/**/*.d.ts",
     ".next/types/**/*.ts",
     ".next\\dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next\\dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

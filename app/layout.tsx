@@ -1,56 +1,34 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
-import Script from "next/script"
+// app/layout.tsx
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+import { type Metadata } from "next";
+import Navigation from "@/components/navigation";
+import { AuthProvider } from "@/context/AuthContext"; 
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'IELTS MaterAI',
-  description: 'Created with v0',
-  generator: 'AUROX',
-  icons: {
-    icon: [
-      {
-        url: '/icon.webp',
-        type: 'image/webp',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
-}
+    title: "IELTS MasterAI",
+    description: "Ielts Practice",
+};
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  return (
-    <html lang="en">
-      <head>
-        {/* Google site verification */}
-        <meta name="google-site-verification" content="wJMZvfx1rO8CzfMhJIfDEY1z7K6jUTa18nUhXjMgpIc" />
-      </head>
-
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-3Y8E096913"
-        strategy="afterInteractive"
-      />
-      <Script id="ga4" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-3Y8E096913');
-        `}
-      </Script>
-
-      <body className="font-sans antialiased">
-        {children}
-        <Analytics /> 
-      </body>
-    </html>
-  )
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en">
+            <head>
+                <link 
+                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
+                    rel="stylesheet" 
+                />
+            </head>
+            <body className="font-sans antialiased">
+                <AuthProvider> 
+                    <Navigation /> 
+                    <main>{children}</main>
+                </AuthProvider>
+            </body>
+        </html>
+    );
 }

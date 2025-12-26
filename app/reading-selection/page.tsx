@@ -1,145 +1,164 @@
 "use client"
 
+
+
 import Link from "next/link"
-import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Clock, FileText, BarChart3 } from "lucide-react"
+import { Clock, Upload, Lock } from "lucide-react"
+import { useEffect, useState } from "react"
+import readingDataRaw from "../reading_data/all_reading_data.json"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
+
+// TypeScript types for JSON structure
+type ReadingTest = {
+  test_id: string;
+  test_title: string;
+  total_questions: number;
+  description?: string;
+  parts?: any[];
+};
+
+type ReadingLevel = {
+  level_id: string;
+  level_name: string;
+  tests: ReadingTest[];
+};
+
 
 export default function ReadingSelectionPage() {
-  const readingTests = [
-    {
-      id: "passage-1",
-      title: "Basic Reading",
-      subtitle: "Simple Comprehension",
-      level: "Beginner",
-      duration: 20,
-      description: "Qisqa matnni o‘qib, asosiy ma’lumotlarni tushunish va savollarga javob berish.",
-      questionsCount: 10,
-      icon: "📘",
-      color: "from-green-500 to-teal-500",
-      skills: ["Main ideas", "Simple vocabulary", "Basic comprehension"]
-    },
-    {
-      id: "passage-2",
-      title: "Academic Reading",
-      subtitle: "Multiple Choice",
-      level: "Intermediate",
-      duration: 30,
-      description: "O‘rta murakkablikdagi ilmiy matnlar asosida savollarga javob bering.",
-      questionsCount: 15,
-      icon: "📗",
-      color: "from-blue-500 to-cyan-500",
-      skills: ["Inference", "Details", "Academic vocabulary"]
-    },
-    {
-      id: "passage-3",
-      title: "Advanced Reading",
-      subtitle: "True / False / Not Given",
-      level: "Advanced",
-      duration: 40,
-      description: "Murakkab matnlar va chuqur tahliliy savollar orqali bilimlaringizni sinang.",
-      questionsCount: 20,
-      icon: "📕",
-      color: "from-purple-500 to-pink-500",
-      skills: ["Critical reading", "Understanding logic", "Advanced vocabulary"]
-    },
-  ]
+  // JSONdan testlarni olish
+  const [levels, setLevels] = useState<ReadingLevel[]>([])
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const [planId, setPlanId] = useState<string | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    setLevels(readingDataRaw.levels as ReadingLevel[] || [])
+  }, [])
+
+  // Premium holatini localStorage'dan o'qish (xuddi premium sahifasidagi kabi)
+  useEffect(() => {
+    if (!user?.email) return
+    try {
+      const stored = localStorage.getItem("premiumUsers")
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, { planId: string; expiresAt: string }>
+        const entry = parsed[user.email]
+        if (entry) setPlanId(entry.planId)
+      }
+    } catch (e) {
+      console.error("premiumUsers parse error", e)
+    }
+  }, [user?.email])
+
+  const hasPremium = !!planId && planId !== "free"
+  const lockedLevel = (levelId: string) => levelId !== "BASIC" && !hasPremium
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navigation />
-
       <main className="flex-grow py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-
-          {/* Header */}
           <div className="text-center mb-16">
             <div className="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
               📚 IELTS Reading Practice
             </div>
-            <h1 className="text-5xl font-bold text-slate-900 mb-4">
-              Reading Tests
-            </h1>
+            <h1 className="text-5xl font-bold text-slate-900 mb-4">Reading Tests</h1>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
               Matnlarni o‘qish va tushunish bo‘yicha real IELTS darajasidagi mashqlarni bajaring.
             </p>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {readingTests.map((test) => (
-              <div
-                key={test.id}
-                className="bg-white rounded-2xl border border-slate-200 hover:border-green-400 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 group"
-              >
-                {/* Gradient Header */}
-                <div className={`h-2 bg-gradient-to-r ${test.color}`} />
-
-                <div className="p-6">
-                  {/* Icon + Level */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-5xl">{test.icon}</div>
-
-                    <span className={`
-                      px-3 py-1 text-xs font-bold rounded-full
-                      ${test.level === "Beginner" ? "bg-green-100 text-green-700" :
-                        test.level === "Intermediate" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-red-100 text-red-700"}
-                    `}>
-                      {test.level}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-2xl font-bold text-slate-900">{test.title}</h3>
-                  <p className="text-sm text-slate-500 mb-4">{test.subtitle}</p>
-
-                  {/* Details */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Clock size={16} className="text-green-600" />
-                      <span>{test.duration} minutes</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <FileText size={16} className="text-blue-600" />
-                      <span>{test.questionsCount} questions</span>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    {test.description}
+          {/* PDF yuklash (Custom Test) CTA */}
+          <div className="mb-12">
+            <div className="bg-white border border-dashed border-green-300 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-green-100 text-green-700 flex items-center justify-center">
+                  <Upload size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">PDF’dan avtomatik reading testi</h3>
+                  <p className="text-slate-600">
+                    O‘z PDF faylingizni yuklang, savollar va passage avtomatik ajratiladi.
                   </p>
-
-                  {/* Skills */}
-                  <div className="mb-6">
-                    <p className="text-xs font-semibold text-slate-500 mb-2">Skills you'll practice:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {test.skills.map((skill, idx) => (
-                        <span key={idx} className="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded-full">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Button */}
-                  <Link href={`/reading/${test.id}`}>
-                    <Button
-                      className={`w-full bg-gradient-to-r ${test.color} text-white py-3 text-base rounded-xl font-semibold shadow-md group-hover:shadow-lg transition-all`}
-                    >
-                      Start Reading
-                    </Button>
-                  </Link>
                 </div>
               </div>
-            ))}
+              <Link href="/custom-test">
+                <Button className="bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold shadow">
+                  PDF yuklash
+                </Button>
+              </Link>
+            </div>
           </div>
 
+          {/* Levels and Tests */}
+          {levels.length === 0 ? (
+            <div className="text-center text-slate-500">Loading...</div>
+          ) : (
+            levels.map((level) => (
+              <div key={level.level_id} className="mb-12">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">{level.level_name}</h2>
+                <div className="max-h-[600px] overflow-auto custom-scrollbar pr-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {level.tests.map((test) => (
+                      <div
+                        key={test.test_id}
+                        className="bg-white rounded-2xl border border-slate-200 hover:border-green-400 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 group"
+                      >
+                        <div className="h-2 bg-gradient-to-r from-green-500 to-teal-500" />
+                        <div className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="text-5xl">📘</div>
+                            <span className="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700">
+                              {level.level_name}
+                            </span>
+                          </div>
+                          <h3 className="text-2xl font-bold text-slate-900">{test.test_title}</h3>
+                          <p className="text-sm text-slate-500 mb-4">{test.test_id}</p>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <Clock size={16} className="text-green-600" />
+                              <span>{test.total_questions} questions</span>
+                            </div>
+                          </div>
+                          <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                            {/* description yo'q bo'lsa test_title ko'rsatiladi */}
+                            {test.description || test.test_title}
+                          </p>
+                          <Button
+                            className={`w-full py-3 text-base rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 ${
+                              lockedLevel(level.level_id)
+                                ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                                : "bg-gradient-to-r from-green-500 to-teal-500 text-white group-hover:shadow-lg"
+                            }`}
+                            onClick={() => {
+                              if (lockedLevel(level.level_id)) {
+                                router.push("/premium")
+                                return
+                              }
+                              router.push(`/reading/${test.test_id}`)
+                            }}
+                            disabled={isLoading}
+                          >
+                            {lockedLevel(level.level_id) ? (
+                              <>
+                                <Lock size={16} /> Premium kerak
+                              </>
+                            ) : (
+                              "Start Reading"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </main>
-
       <Footer />
     </div>
   )

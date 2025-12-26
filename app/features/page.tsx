@@ -1,4 +1,4 @@
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Mic, PenTool, BookOpen, Volume2, Globe } from "lucide-react"
 
@@ -38,7 +38,7 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-grow py-12 sm:py-20 px-3 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

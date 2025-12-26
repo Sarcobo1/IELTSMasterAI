@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { RefreshCw, Clock, AlertCircle } from "lucide-react"
 
@@ -232,7 +232,7 @@ export default function WritingTaskPage() {
   if (questions.length === 0) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-grow flex justify-center items-center">
           <p className="text-slate-900 text-xl">Loading questions...</p>
         </main>
@@ -243,7 +243,7 @@ export default function WritingTaskPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-grow py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">

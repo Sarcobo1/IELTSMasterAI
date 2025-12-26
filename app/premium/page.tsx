@@ -1,12 +1,15 @@
 "use client"
 
-import { ForwardRefExoticComponent, RefAttributes } from 'react';
+import { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Crown, Clock, Zap, MessageCircle, Sparkles, LucideProps } from "lucide-react"; 
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+
+const ADMIN_TELEGRAM = "@your_admin_username";
 
 // 💡 Navigatsiya panelini import qilamiz
-import Navigation from "@/components/navigation"; 
+// import Navigation from "@/components/navigation"; 
 
 
 // --- TYPE DEFINITIONS (Ma'lumot turlari) ---
@@ -100,38 +103,88 @@ const plans: PlanType[] = [
 
 export default function PremiumPage() {
     const router = useRouter();
-    
-    // isAnnual ni boolean turiga majburlash uchun!! operatoridan foydalanamiz
+    const { isAuthenticated, isLoading, user } = useAuth();
+
+    const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+    const [currentExpiry, setCurrentExpiry] = useState<string | null>(null);
+
+    const formatDate = (iso?: string | null) => {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleDateString();
+    }
+
+    const planName = (id?: string | null) => {
+        const match = plans.find(p => p.id === id);
+        return match?.name || id || '';
+    };
+
+    // Load existing status for logged-in user
+    useEffect(() => {
+        if (!user?.email) return;
+        const stored = localStorage.getItem('premiumUsers');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored) as Record<string, { planId: string; expiresAt: string }>;
+                const entry = parsed[user.email];
+                if (entry) {
+                    setCurrentPlan(entry.planId);
+                    setCurrentExpiry(entry.expiresAt);
+                }
+            } catch (e) {
+                console.error('premiumUsers parsing error', e);
+            }
+        }
+    }, [user?.email]);
+
     const handlePurchase = (planId: string, isAnnual: boolean) => {
-        // Bepul rejani sotib olish uchun alohida shart
+        if (!isAuthenticated || !user?.email) {
+            router.push('/sign-in');
+            return;
+        }
+
+        // Agar "Bepul" tanlansa, Premium yozuvini tozalaymiz
         if (planId === 'free') {
-            localStorage.setItem('isPremium', 'false');
-            localStorage.setItem('premiumPlanId', 'free');
-            alert("✅ Bepul rejani faollashtirdingiz. Cheklangan funksiyalardan foydalanishingiz mumkin!");
+            try {
+                const current = localStorage.getItem('premiumUsers');
+                if (current) {
+                    const map = JSON.parse(current) as Record<string, { planId: string; expiresAt: string }>;
+                    delete map[user.email];
+                    localStorage.setItem('premiumUsers', JSON.stringify(map));
+                }
+            } catch (e) {
+                console.warn('premiumUsers parse failed when resetting to free', e);
+            }
+            setCurrentPlan(null);
+            setCurrentExpiry(null);
             router.push('/');
             return;
         }
 
-
-        const purchaseSuccess = window.confirm(`Siz "${planId}" rejasini sotib olish tugmasini bosdingiz. Simulyatsiyani davom ettirishni xohlaysizmi?`);
-
-        if (!purchaseSuccess) return;
-
-        localStorage.setItem('isPremium', 'true');
-        localStorage.setItem('premiumPlanId', planId); 
-        
-        const days = isAnnual ? 365 : 30;
-        const endDate = new Date(Date.now() + (days * 24 * 60 * 60 * 1000)).toISOString();
-        localStorage.setItem('premiumEndDate', endDate);
-
-        alert("🎉 Tabriklaymiz! Siz premium obunaga ega bo'ldingiz! Funksiyalar ochildi.");
-        
-        router.push('/'); 
+        // Hamma foydalanuvchilar to'lov sahifasiga yo'naltiriladi
+        router.push(`/payment?plan=${planId}`);
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <p className="text-gray-700">Yuklanmoqda...</p>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated || !user) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
+                <p className="text-lg text-gray-700">Premium rejalardan foydalanish uchun tizimga kiring.</p>
+                <Button onClick={() => router.push('/sign-in')} className="bg-blue-600 text-white">Kirish</Button>
+            </div>
+        );
+    }
 
     return (
         <>
-            <Navigation /> 
+            {/* <Navigation />  */}
             
             {/* Sahifa Kontenti */}
             <div className="min-h-screen bg-slate-50 py-12 px-4 pt-20">
@@ -140,12 +193,25 @@ export default function PremiumPage() {
                     <h1 className="text-4xl font-black text-slate-900 mb-2">IELTS MasterAI Obuna Rejalari</h1>
                     <p className="text-xl text-slate-600 mb-10">Maqsadingizga mos keladigan rejangizni tanlang va o'rganishni boshlang.</p>
 
+                    {/* Current status banner */}
+                    {currentPlan && (
+                        <div className="max-w-2xl mx-auto mb-10 p-4 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                                <p className="font-semibold">Faol reja: {planName(currentPlan)}</p>
+                                {currentExpiry && <p className="text-sm">Amal qilish muddati: {formatDate(currentExpiry)}</p>}
+                            </div>
+                            <div className="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold uppercase">
+                                {currentPlan}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6"> 
                         
                         {plans.map((plan) => (
                             <div 
                                 key={plan.id}
-                                className={`relative p-8 rounded-2xl shadow-xl flex flex-col transition-all duration-300 ${plan.style} ${plan.id === 'free' ? 'shadow-md hover:shadow-lg' : 'opacity-50 backdrop-blur-sm'}`}
+                                className={`relative p-8 rounded-2xl shadow-xl flex flex-col transition-all duration-300 ${plan.style} ${plan.id === currentPlan ? 'ring-2 ring-blue-500 shadow-blue-500/30' : plan.id === 'free' ? 'shadow-md hover:shadow-lg' : ''}`}
                             >
                                 {/* Ommaboplik yorlig'i */}
                                 {plan.isAnnual && (
@@ -183,7 +249,7 @@ export default function PremiumPage() {
                                                 {/* "Tez Kunda" yorlig'i */}
                                                 {feature.isSoon && <span className="text-xs text-slate-500 ml-1 font-semibold"> (Tez Kunda)</span>}
                                                 {/* Oddiy cheklov yorlig'i (faqat isSoon bo'lmaganida ko'rsatiladi) */}
-                                                {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Tekin)</span>}
+                                                {feature.limited && !feature.isSoon && <span className="text-xs text-red-500 ml-1 font-semibold"> (Limit)</span>}
                                             </p>
                                         </div>
                                     ))}
@@ -191,23 +257,18 @@ export default function PremiumPage() {
 
                                 <Button 
                                     onClick={() => handlePurchase(plan.id, !!plan.isAnnual)} 
+                                    disabled={plan.id !== 'free' && plan.id === currentPlan}
                                     className={`w-full h-12 text-lg font-semibold shadow-lg ${
                                         plan.id === 'free'
                                         ? 'bg-gray-500 hover:bg-gray-600 shadow-gray-500/30'
                                         : plan.isAnnual 
                                         ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30' 
                                         : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
-                                    }`}
+                                    } ${plan.id === currentPlan ? 'opacity-80 cursor-not-allowed' : ''}`}
                                 >
-                                    {plan.id === 'free' ? 'Bepul Boshlash' : 'Sotib olish'}
+                                    {plan.id === currentPlan ? 'Faol reja' : plan.id === 'free' ? 'Bepul Boshlash' : 'Sotib olish'}
                                 </Button>
 
-                                {/* Premium cardlar uchun overlay bilan "TEZ KUNDA" */}
-                                {plan.id !== 'free' && (
-                                    <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex items-center justify-center z-10">
-                                        <h2 className="text-5xl font-extrabold text-red-600 transform rotate-[-15deg] opacity-90">TEZ KUNDA</h2>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>
@@ -215,4 +276,4 @@ export default function PremiumPage() {
             </div>
         </>
     );
-}
+}//hozircha

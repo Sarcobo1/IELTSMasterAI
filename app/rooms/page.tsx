@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Mic, User, Headset } from 'lucide-react';
-import Navigation from "@/components/navigation";
+// import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button"; 
 import Link from 'next/link';
 
@@ -53,7 +53,7 @@ const RoomCard = ({ room }: { room: RoomData }) => {
 export default function RoomsPage() {
     return (
         <>
-            <Navigation />
+            {/* <Navigation /> */}
             <div className="min-h-screen bg-white py-12 px-4 pt-20">
                 <div className="max-w-7xl mx-auto">
                     <h1 className="text-3xl font-extrabold text-slate-900 mb-8 flex items-center">

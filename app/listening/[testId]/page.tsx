@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import Navigation from "@/components/navigation"
+// import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Play, Pause, Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react"
 
@@ -497,7 +497,7 @@ const handleStartPart2 = () => {
     if (testStage === 'results1') {
         return (
             <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-                <Navigation />
+                {/* <Navigation /> */}
                 <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
                     <div className="max-w-4xl mx-auto">
                         <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 flex items-center gap-2">
@@ -528,7 +528,7 @@ const handleStartPart2 = () => {
     if (testStage === 'final') {
         return (
             <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-                <Navigation />
+                {/* <Navigation /> */}
                 <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
                     <div className="max-w-4xl mx-auto">
                         <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 flex items-center gap-2">
@@ -554,7 +554,7 @@ const handleStartPart2 = () => {
     // === Savollar bo'limi (Asosiy view) ===
     return (
         <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-            <Navigation />
+            {/* <Navigation /> */}
             <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">

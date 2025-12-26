@@ -1,28 +1,36 @@
-interface SidebarProps {
+// path: ../vocabulary/page1.tsx
+"use client";
+import React from "react";
+
+interface Props {
   topics: string[];
   selectedTopic: string;
   onTopicChange: (topic: string) => void;
 }
 
-export default function Sidebar({ topics, selectedTopic, onTopicChange }: SidebarProps) {
+export default function Sidebar({ topics, selectedTopic, onTopicChange }: Props) {
   return (
-    <aside className="w-64 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-24">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Topic</h3>
-      <nav className="space-y-2">
-        {topics.map((topic) => (
-          <button
-            key={topic}
-            onClick={() => onTopicChange(topic)}
-            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
-              selectedTopic === topic
-                ? "bg-blue-600 text-white shadow-md"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {topic}
-          </button>
-        ))}
-      </nav>
-    </aside>
+    <nav className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <h4 className="text-sm font-semibold text-gray-700 mb-3">Topics</h4>
+      <ul className="flex flex-col gap-2">
+        {topics.map((topic) => {
+          const active = topic === selectedTopic;
+          return (
+            <li key={topic}>
+              <button
+                onClick={() => onTopicChange(topic)}
+                className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                  active
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow"
+                    : "text-gray-700 bg-white hover:bg-gray-50 border border-gray-100"
+                }`}
+              >
+                {topic}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

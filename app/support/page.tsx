@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Script from "next/script"
 import { Button } from "@/components/ui/button"
-import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { Search, MessageCircle, Mail, HelpCircle, BookOpen, CreditCard, Shield, Sparkles, ChevronDown } from "lucide-react"
+import { Search, MessageCircle, HelpCircle, BookOpen, CreditCard, Shield, Sparkles, ChevronDown } from "lucide-react"
 
 const faqs = [
   {
@@ -26,7 +26,7 @@ const faqs = [
       },
       {
         q: "How do I delete my account?",
-        a: "Contact our support team via the form below, and we'll help you process your account deletion request.",
+        a: "Contact our support team via the chat button below, and we'll help you process your account deletion request.",
       },
     ],
   },
@@ -76,35 +76,27 @@ const faqs = [
   },
 ]
 
-const quickLinks = [
-  {
-    icon: MessageCircle,
-    title: "Live Chat",
-    description: "Chat with our support team",
-    action: "Start Chat",
-    color: "from-blue-500 to-blue-600"
-  },
-  {
-    icon: Mail,
-    title: "Email Support",
-    description: "support@ieltsai.com",
-    action: "Send Email",
-    color: "from-purple-500 to-purple-600"
-  },
-  {
-    icon: HelpCircle,
-    title: "Help Center",
-    description: "Browse detailed guides",
-    action: "Visit Center",
-    color: "from-red-500 to-red-600"
-  },
-]
-
 export default function SupportPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [submitted, setSubmitted] = useState(false)
   const [openFaq, setOpenFaq] = useState<string | null>(null)
+  const [crispLoaded, setCrispLoaded] = useState(false)
+
+  // Crisp chat'ni faqat shu page'da ko'rsatish
+  useEffect(() => {
+    // Crisp chat'ni ko'rsatish
+    if (window.$crisp) {
+      window.$crisp.push(["do", "chat:show"])
+    }
+
+    // Component unmount bo'lganda chatni yashirish
+    return () => {
+      if (window.$crisp) {
+        window.$crisp.push(["do", "chat:hide"])
+      }
+    }
+  }, [])
 
   const filteredFaqs = faqs
     .map((category) => ({
@@ -118,36 +110,53 @@ export default function SupportPage() {
     .filter((cat) => cat.questions.length > 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  if (!formData.name || !formData.email || !formData.message) {
-    alert("Please fill all fields before submitting.")
-    return
-  }
-
-  try {
-    const res = await fetch('/api/support', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    })
-
-    if (res.ok) {
-      setSubmitted(true)
-      setFormData({ name: '', email: '', message: '' })
-      setTimeout(() => setSubmitted(false), 5000)
-    } else {
-      alert("Failed to submit message.")
+    if (!formData.name || !formData.email || !formData.message) {
+      alert("Please fill all fields before submitting.")
+      return
     }
-  } catch (error) {
-    alert("An error occurred. Please try again later.")
-  }
-}
 
+    try {
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        setSubmitted(true)
+        setFormData({ name: '', email: '', message: '' })
+        setTimeout(() => setSubmitted(false), 5000)
+      } else {
+        alert("Failed to submit message.")
+      }
+    } catch (error) {
+      alert("An error occurred. Please try again later.")
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white overflow-x-hidden">
-      <Navigation />
+      {/* Crisp Chat Script - faqat support page'da */}
+      <Script
+        id="crisp-chat"
+        strategy="afterInteractive"
+        onLoad={() => setCrispLoaded(true)}
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.$crisp=[];
+            window.CRISP_WEBSITE_ID="3a65cc77-fa81-4e26-bf60-bc344cc9f4e7";
+            (function(){
+              d=document;
+              s=d.createElement("script");
+              s.src="https://client.crisp.chat/l.js";
+              s.async=1;
+              d.getElementsByTagName("head")[0].appendChild(s);
+            })();
+          `,
+        }}
+      />
 
       <main className="flex-grow">
         {/* Hero Section */}
@@ -168,7 +177,7 @@ export default function SupportPage() {
               How Can We <span className="bg-gradient-to-r from-red-400 to-cyan-400 bg-clip-text text-transparent">Help You?</span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Find answers to your questions or get in touch with our support team
+              Find answers to your questions or chat with our support team
             </p>
 
             {/* Search Bar */}
@@ -181,29 +190,6 @@ export default function SupportPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl text-white placeholder-gray-400 focus:border-red-400 focus:bg-white/20 outline-none transition-all"
               />
-            </div>
-          </div>
-        </section>
-
-        {/* Quick Links */}
-        <section className="py-8 px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {quickLinks.map((link, idx) => (
-                <div
-                  key={idx}
-                  className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200 cursor-pointer"
-                >
-                  <div className={`w-12 h-12 bg-gradient-to-br ${link.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <link.icon size={24} className="text-white" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2">{link.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{link.description}</p>
-                  <span className="text-sm font-semibold text-red-600 group-hover:text-red-700">
-                    {link.action} →
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -360,4 +346,3 @@ export default function SupportPage() {
     </div>
   )
 }
-// Simulate API call
