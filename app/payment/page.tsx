@@ -8,7 +8,7 @@ import { Crown, Zap, Clock, Send, Copy } from "lucide-react";
 
 const ADMIN_TELEGRAM = "@your_admin_username";
 const CARD_NUMBER = "8600 1234 5678 9012";
-const CARD_NAME = "Akkn Admin";
+const CARD_NAME = "Muhammadjonov Azizbek";
 
 const plans = [
     {
