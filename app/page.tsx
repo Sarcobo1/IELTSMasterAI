@@ -20,17 +20,21 @@ export default function Home() {
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const typedRef = useRef<HTMLSpanElement | null>(null);
 
-  // Typed.js initialization
+  // Typed.js initialization (faqat client va katta ekranlarda)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth < 768) return; // mobil qurilmalarda typed.js ni o'chiramiz
     if (!typedRef.current) return;
+
     const typed = new Typed(typedRef.current, {
-      strings: ["Kelajakni.", "Imkoniyatni.", "Natijani."],
+      strings: ["your future.", "your opportunities.", "your results."],
       typeSpeed: 80,
       backSpeed: 50,
       backDelay: 1500,
       loop: true,
-      showCursor: false, // Zamonaviy dizaynda kursor shart emas
+      showCursor: false,
     });
+
     return () => typed.destroy();
   }, []);
 
@@ -67,12 +71,10 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans selection:bg-indigo-500/30">
       
-      {/* Background Grid Pattern (Juda zamonaviy fon) */}
+      {/* Background Grid Pattern (yengillashtirilgan fon, tashqi rasm yo'q) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.16),transparent_60%),radial-gradient(circle_at_top_right,_rgba(244,114,182,0.14),transparent_55%)]"></div>
          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-indigo-500 opacity-20 blur-[100px]"></div>
-         <div className="absolute right-0 top-0 -z-10 h-[310px] w-[310px] rounded-full bg-purple-500 opacity-20 blur-[100px] translate-x-1/2"></div>
       </div>
 
       <main className="flex-grow relative z-10">
@@ -87,7 +89,7 @@ export default function Home() {
               <div className="flex-1 text-center lg:text-left space-y-8">
                 
                 {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-200 bg-white/50 backdrop-blur-md shadow-sm animate-fade-in-up">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-200 bg-white/50 backdrop-blur-md shadow-sm">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
@@ -97,14 +99,15 @@ export default function Home() {
 
                 {/* Main Heading */}
                 <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9]">
-                  O'zgartiring <br />
+                  Transform <br />
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-gradient-x">
                     <span ref={typedRef}></span>
                   </span>
                 </h1>
 
                 <p className="text-slate-600 text-lg sm:text-xl max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                  Sun'iy intellekt yordamida IELTS imtihoniga tayyorlanishning <span className="text-slate-900 font-bold underline decoration-indigo-400/50 decoration-2 underline-offset-4">yangi davri.</span> Speaking va Writing bo'yicha aniq tahlil.
+                  A new era of IELTS preparation with <span className="text-slate-900 font-bold underline decoration-indigo-400/50 decoration-2 underline-offset-4">IELTSMasterAI.</span> 
+                  Get precise, AI-powered analysis for your Speaking and Writing.
                 </p>
 
                 {/* Buttons */}
@@ -125,18 +128,12 @@ export default function Home() {
                   </Link>
                 </div>
 
-                {/* Users Avatars (Social Proof) */}
-                <div className="flex items-center justify-center lg:justify-start gap-4 pt-4 opacity-80 grayscale hover:grayscale-0 transition-all duration-500">
-                   <div className="flex -space-x-3">
-                      {[1,2,3,4].map((i) => (
-                        <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                           <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" className="w-full h-full object-cover"/>
-                        </div>
-                      ))}
-                   </div>
-                   <div className="text-sm font-semibold text-slate-600">
-                      <span className="text-indigo-600">1,000+</span> o'quvchi tayyorlanmoqda
-                   </div>
+                {/* Users info (yengil variant, tashqi avatar rasmlarisiz) */}
+                <div className="flex items-center justify-center lg:justify-start gap-3 pt-4 text-sm font-semibold text-slate-600">
+                  <span className="inline-flex items-center justify-center rounded-full bg-indigo-50 text-indigo-600 px-3 py-1">
+                    1,000+ o'quvchi
+                  </span>
+                  <span className="text-slate-500">IELTSMasterAI orqali tayyorlanmoqda</span>
                 </div>
 
               </div>
@@ -237,7 +234,6 @@ export default function Home() {
 
               {/* Card 2: Writing (Tall) */}
               <div className="md:row-span-2 group relative overflow-hidden rounded-[2.5rem] bg-slate-900 text-white p-8 flex flex-col justify-between hover:shadow-2xl transition-all duration-500">
-                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
                  <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-indigo-900/50 to-transparent"></div>
 
                  <div className="relative z-10">

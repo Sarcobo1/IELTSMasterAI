@@ -106,6 +106,10 @@ export default function SpeakingTestPage() {
     grammar: 0,
     vocabulary: 0,
   })
+<<<<<<< HEAD
+=======
+  const [isDailyLimited, setIsDailyLimited] = useState(false)
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
 
   const recognitionRef = useRef<any>(null)
   const recognitionBufferRef = useRef<string>("")
@@ -131,6 +135,20 @@ export default function SpeakingTestPage() {
     } catch (e) {
       console.error("Failed to load transcripts from localStorage", e)
     }
+<<<<<<< HEAD
+=======
+
+    // Kunlik limitni tekshirish (kuniga 1 ta analiz)
+    try {
+      const lastDate = localStorage.getItem(`speaking:${testId}:lastDate`)
+      const today = new Date().toISOString().split("T")[0]
+      if (lastDate === today) {
+        setIsDailyLimited(true)
+      }
+    } catch (e) {
+      console.error("Failed to read speaking daily limit date", e)
+    }
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
   }, [testId])
 
   useEffect(() => {
@@ -289,6 +307,14 @@ export default function SpeakingTestPage() {
   // HANDLE CHECK + SCORING
   // =========================================================
   const handleCheck = async (textParam?: string) => {
+<<<<<<< HEAD
+=======
+    if (isDailyLimited) {
+      alert("Bugun bu speaking bo'limi uchun tahlil limiti tugagan. Ertaga yana bir marta tekshirtirishingiz mumkin.")
+      return
+    }
+
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
     const combined = [currentTranscript, ...transcripts.map((t) => t.text)]
       .filter(Boolean)
       .join(" ")
@@ -355,6 +381,14 @@ export default function SpeakingTestPage() {
       setImprovements(groqResult.improvements || [])
 
       setShowResults(true)
+<<<<<<< HEAD
+=======
+
+      // Kunlik limitni belgilash
+      const today = new Date().toISOString().split("T")[0]
+      localStorage.setItem(`speaking:${testId}:lastDate`, today)
+      setIsDailyLimited(true)
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
     } catch (e: any) {
       console.error(e)
       alert("Error checking with Groq AI: " + (e.message || e))

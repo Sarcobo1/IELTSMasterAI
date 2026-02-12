@@ -45,6 +45,16 @@ export default function AdminPage() {
             setMessage("Email kiritilishi kerak.");
             return;
         }
+<<<<<<< HEAD
+=======
+
+        // Admin tokenni localStorage'dan olish
+        const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+        if (!token) {
+            setMessage("❌ Xato: Admin token topilmadi. Iltimos, qaytadan login qiling.");
+            return;
+        }
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
         
         try {
             // MongoDB ga yozish
@@ -52,6 +62,10 @@ export default function AdminPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+<<<<<<< HEAD
+=======
+                    'Authorization': `Bearer ${token}`,
+>>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
                 },
                 body: JSON.stringify({ targetEmail: targetEmail.trim() }),
             });

@@ -47,10 +47,13 @@ const plans: PlanType[] = [
         price: "$0",
         tag: "Dastlabki sinov",
         features: [
-            { text: "Hozircha hammasi tekin", limited: true, icon: Clock },
-            { text: "Hozirda hammasi tekin", limited: true, icon: Clock },
-            { text: "Hozirda hammasi tekin", limited: true, icon: Clock },
-            { text: "Hozirda hammasi tekin", limited: false, icon: CheckCircle },
+            { text: "Vocebluary", limited: true, icon: CheckCircle },
+            { text: "Speaking Analyzer", limited: true, icon: Clock },
+            { text: "Writing", limited: true, icon: Clock },
+            { text: "Speaking", limited: false, icon: Clock },
+            { text: "Reading", limited: false, icon: Clock },
+            { text: "Listening", limited: false, icon: Clock },
+            { text: "Ai Tutor", limited: false, icon: Clock  },
         ],
         style: "bg-white border-2 border-gray-300 hover:border-gray-500"
     },
@@ -119,23 +122,17 @@ export default function PremiumPage() {
         return match?.name || id || '';
     };
 
-    // Load existing status for logged-in user
+    // Load existing status for logged-in user from AuthContext (DB)
     useEffect(() => {
-        if (!user?.email) return;
-        const stored = localStorage.getItem('premiumUsers');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored) as Record<string, { planId: string; expiresAt: string }>;
-                const entry = parsed[user.email];
-                if (entry) {
-                    setCurrentPlan(entry.planId);
-                    setCurrentExpiry(entry.expiresAt);
-                }
-            } catch (e) {
-                console.error('premiumUsers parsing error', e);
-            }
+        if (!user) {
+            setCurrentPlan(null);
+            setCurrentExpiry(null);
+            return;
         }
-    }, [user?.email]);
+
+        setCurrentPlan(user.planId || 'free');
+        setCurrentExpiry(user.premiumExpiresAt || null);
+    }, [user]);
 
     const handlePurchase = (planId: string, isAnnual: boolean) => {
         if (!isAuthenticated || !user?.email) {
