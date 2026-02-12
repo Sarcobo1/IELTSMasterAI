@@ -83,10 +83,7 @@ export default function WritingTaskPage() {
   const [grammarResult, setGrammarResult] = useState<any>(null)
   const [checking, setChecking] = useState(false)
   const [attempts, setAttempts] = useState<Array<any>>([])
-<<<<<<< HEAD
-=======
   const [isDailyLimited, setIsDailyLimited] = useState(false)
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
 
   // TIMER STATES
   const [testStarted, setTestStarted] = useState(false)
@@ -126,8 +123,6 @@ export default function WritingTaskPage() {
     } catch (e) {
       console.error("Failed to load attempts", e)
     }
-<<<<<<< HEAD
-=======
 
     // Kunlik limitni tekshirish (kuniga 1 ta ese)
     try {
@@ -139,7 +134,6 @@ export default function WritingTaskPage() {
     } catch (e) {
       console.error("Failed to read daily limit date", e)
     }
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
   }, [testId])
 
   useEffect(() => {
@@ -166,13 +160,10 @@ export default function WritingTaskPage() {
 
   // Submit essay
   const handleCheck = async () => {
-<<<<<<< HEAD
-=======
     if (isDailyLimited) {
       alert("Bugun bu writing test uchun limit tugagan. Ertaga yana bir marta yuborishingiz mumkin.")
       return
     }
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
     const text = essay.trim()
 
     if (!text) {
@@ -236,14 +227,11 @@ export default function WritingTaskPage() {
       setAttempts((prev) => [attempt, ...prev])
       setSubmitted(true)
       setTestStarted(false)
-<<<<<<< HEAD
-=======
 
       // Kunlik limitni belgilash
       const today = new Date().toISOString().split("T")[0]
       localStorage.setItem(`writing:${testId}:lastDate`, today)
       setIsDailyLimited(true)
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
     } catch (e: any) {
       console.error(e)
       alert("Error checking essay: " + (e.message || e))

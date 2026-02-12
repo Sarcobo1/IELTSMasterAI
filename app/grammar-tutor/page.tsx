@@ -62,16 +62,9 @@ export default function GrammarTutorPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-<<<<<<< HEAD
-      const token = localStorage.getItem('userToken');
-      setIsLoggedIn(!!token);
-      
-=======
       // AuthContext ham ishlatadi: 'authToken'
       const token = localStorage.getItem('authToken');
       setIsLoggedIn(!!token);
-
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
       const count = parseInt(localStorage.getItem('questionCount') || '0', 10);
       setQuestionCount(count);
       
@@ -81,11 +74,7 @@ export default function GrammarTutorPage() {
           const loaded = JSON.parse(stored);
           if (Array.isArray(loaded)) {
              // Saqlangan xabarlarni yuklashda ID ni qayta generatsiya qilish xato kelishining oldini oladi
-<<<<<<< HEAD
-             setMessages(loaded.map((msg: any, i: number) => ({ 
-=======
              setMessages(loaded.map((msg: any) => ({ 
->>>>>>> 711de7a (Home page optimizatsiya qilindi va Linux orqali yuklandi)
                  ...msg, 
                  id: generateMessageId(), // Har biriga yangi unikal ID berish
              })));
