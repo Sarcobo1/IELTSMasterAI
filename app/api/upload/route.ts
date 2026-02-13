@@ -312,10 +312,21 @@ ${extractedPart.questions}
                         let ans = answersMap[assignedId].toUpperCase();
 
                         if (group.type === 'tfng') {
-                            // TRUE/FALSE/NOT GIVEN ni normalizatsiya qilish
-                            if (['T', 'TRUE'].includes(ans)) ans = 'TRUE';
-                            else if (['F', 'FALSE'].includes(ans)) ans = 'FALSE';
-                            else ans = 'NOT GIVEN';
+                            // Agar ANSWERS bo'limida A/B/C shaklida berilgan bo'lsa, variantlar orqali TFNG ga map qilamiz
+                            if (/^[A-C]$/.test(ans) && q.options && q.options.length >= 3) {
+                                const idx = ans.charCodeAt(0) - 65; // A->0, B->1, C->2
+                                const rawOpt = q.options[idx] || '';
+                                const optText = rawOpt.replace(/^[A-Z]\.\s*/, '').trim().toUpperCase();
+                                
+                                if (optText.startsWith('TRUE')) ans = 'TRUE';
+                                else if (optText.startsWith('FALSE')) ans = 'FALSE';
+                                else ans = 'NOT GIVEN';
+                            } else {
+                                // TRUE/FALSE/NOT GIVEN ni normalizatsiya qilish
+                                if (['T', 'TRUE'].includes(ans)) ans = 'TRUE';
+                                else if (['F', 'FALSE'].includes(ans)) ans = 'FALSE';
+                                else ans = 'NOT GIVEN';
+                            }
                         }
 
                         finalAnswer = ans;
