@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
         
-        const { parts: extractedParts, fullPassageText } = parseResult;
+        const { parts: extractedParts, fullPassageText, answersMap = {} } = parseResult;
         
         console.log(`✅ Extracted ${extractedParts.length} parts from PDF`);
 
@@ -271,9 +271,7 @@ ${extractedPart.questions}
                         
                         if (q.type === 'tfng') {
                             if (!q.statement) q.statement = 'Statement text missing';
-                            if (!q.answer || !['TRUE', 'FALSE', 'NOT GIVEN'].includes(q.answer.toUpperCase())) {
-                                q.answer = 'NOT GIVEN';
-                            }
+                            // Javobni hozircha bo'sh qoldiramiz, keyin ANSWERS blokidan to'ldiramiz
                             q.pre = ' ';
                             q.post = ' ';
                             q.words = 1;
@@ -302,13 +300,38 @@ ${extractedPart.questions}
             
             console.log(`✅ Passage split into ${passageParagraphs.length} paragraphs`);
             
-            // Question ID'larni qo'shish
+            // Question ID'larni qo'shish va PDF ANSWERS bo'limidan javoblarni ulash
             const partGroups = parsedQuestions.map(group => ({
                 ...group,
-                questions: group.questions.map(q => ({
-                    ...q,
-                    id: globalQuestionId++
-                })) as Question[]
+                questions: group.questions.map(q => {
+                    const assignedId = globalQuestionId++;
+                    let finalAnswer = q.answer || '';
+
+                    // Agar ANSWERS blokida shu savol uchun javob bo'lsa, AI javobini emas, o'shani ishlatamiz
+                    if (answersMap[assignedId]) {
+                        let ans = answersMap[assignedId].toUpperCase();
+
+                        if (group.type === 'tfng') {
+                            // TRUE/FALSE/NOT GIVEN ni normalizatsiya qilish
+                            if (['T', 'TRUE'].includes(ans)) ans = 'TRUE';
+                            else if (['F', 'FALSE'].includes(ans)) ans = 'FALSE';
+                            else ans = 'NOT GIVEN';
+                        }
+
+                        finalAnswer = ans;
+                    } else if (group.type === 'tfng') {
+                        // ANSWERS bo'lmasa, xavfsiz default
+                        if (!finalAnswer || !['TRUE', 'FALSE', 'NOT GIVEN'].includes(finalAnswer.toUpperCase())) {
+                            finalAnswer = 'NOT GIVEN';
+                        }
+                    }
+
+                    return {
+                        ...q,
+                        id: assignedId,
+                        answer: finalAnswer,
+                    } as Question;
+                }) as Question[]
             }));
             
             // Part'ni qo'shish

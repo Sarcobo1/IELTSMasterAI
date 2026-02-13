@@ -66,6 +66,8 @@ export interface ParsedPart {
 export interface ParseResult {
     parts: ParsedPart[];
     fullPassageText: string;
+    // Global savol raqami -> to'g'ri javob (PDF oxiridagi ANSWERS bo'limidan)
+    answersMap?: Record<number, string>;
 }
 
 // ============================================================================
@@ -130,11 +132,14 @@ function parseWithQuestionsSection(rawText: string): ParseResult {
     const passagesBlock = rawText.substring(0, questionsIndex);
     console.log('📖 Passages block:', passagesBlock.length, 'chars');
     
-    // 3. QUESTIONS bloki (QUESTIONS dan ANSWERS gacha)
+    // 3. QUESTIONS bloki (QUESTIONS dan ANSWERS gacha) va ANSWERS bloki
     const answersIndex = rawText.search(/ANSWERS/i);
     const questionsBlock = answersIndex > 0 
         ? rawText.substring(questionsIndex, answersIndex)
         : rawText.substring(questionsIndex);
+    const answersBlock = answersIndex > 0
+        ? rawText.substring(answersIndex)
+        : '';
     
     console.log('❓ Questions block:', questionsBlock.length, 'chars');
     
@@ -200,12 +205,15 @@ function parseWithQuestionsSection(rawText: string): ParseResult {
     }
     
     const fullPassageText = parts.map(p => p.passage).join('\n\n--- NEXT PASSAGE ---\n\n');
+
+    // 6. ANSWERS bo'limidan javoblarni ajratib olish
+    const answersMap = parseAnswersBlock(answersBlock);
     
     console.log(`\n${'═'.repeat(70)}`);
-    console.log(`✅ PARSING COMPLETE: ${parts.length} parts extracted`);
+    console.log(`✅ PARSING COMPLETE: ${parts.length} parts extracted, answers: ${Object.keys(answersMap).length}`);
     console.log(`${'═'.repeat(70)}\n`);
     
-    return { parts, fullPassageText };
+    return { parts, fullPassageText, answersMap };
 }
 
 // ============================================================================
@@ -325,7 +333,8 @@ function parseSinglePassage(rawText: string): ParseResult {
             passage,
             questions
         }],
-        fullPassageText: passage
+        fullPassageText: passage,
+        answersMap: {}, // Single-passage fallbackda ANSWERS alohida ko'rilmaydi
     };
 }
 
@@ -427,10 +436,71 @@ function parseReadingPassageFormat(rawText: string): ParseResult {
     }
     
     const fullPassageText = parts.map(p => p.passage).join('\n\n--- NEXT PASSAGE ---\n\n');
+
+    // READING PASSAGE formatida ham umumiy ANSWERS bo'limi bo'lishi mumkin
+    const answersIndex = rawText.search(/ANSWERS/i);
+    const answersBlock = answersIndex > 0 ? rawText.substring(answersIndex) : '';
+    const answersMap = parseAnswersBlock(answersBlock);
     
     console.log(`\n${'═'.repeat(70)}`);
-    console.log(`✅ PARSING COMPLETE: ${parts.length} reading passages extracted`);
+    console.log(`✅ PARSING COMPLETE: ${parts.length} reading passages extracted, answers: ${Object.keys(answersMap).length}`);
     console.log(`${'═'.repeat(70)}\n`);
     
-    return { parts, fullPassageText };
+    return { parts, fullPassageText, answersMap };
+}
+
+// ============================================================================
+// 9. ANSWERS BLOKINI PARSING QILISH
+// ============================================================================
+/**
+ * PDF oxiridagi ANSWERS bo'limidan
+ * 1. A
+ * 2. TRUE
+ * 3. NOT GIVEN
+ * ko'rinishidagi satrlarni o'qib, {1: 'A', 2: 'TRUE', ...} ko'rinishida qaytaradi
+ */
+function parseAnswersBlock(answersBlock: string): Record<number, string> {
+    const map: Record<number, string> = {};
+    if (!answersBlock || answersBlock.trim().length === 0) return map;
+
+    console.log('🔎 Parsing ANSWERS block...');
+
+    // Faqat ANSWERS dan keyingi qismini olamiz
+    const cleaned = answersBlock.replace(/^[^\n]*ANSWERS[^\n]*\n?/i, '');
+    const lines = cleaned.split('\n');
+
+    const answerLineRegex = /^(\d+)\s*[\).\:-]?\s*(.+)$/i;
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        const match = line.match(answerLineRegex);
+        if (!match) continue;
+
+        const num = parseInt(match[1], 10);
+        if (isNaN(num)) continue;
+
+        let value = match[2].trim();
+
+        // Birinchi tokenni olish (masalan "A. Paris" -> "A", "TRUE something" -> "TRUE")
+        const firstToken = value.split(/\s+/)[0].replace(/[().]/g, '').toUpperCase();
+
+        // TFNG yoki variant kodi sifatida normalizatsiya
+        if (['TRUE', 'T'].includes(firstToken)) {
+            map[num] = 'TRUE';
+        } else if (['FALSE', 'F'].includes(firstToken)) {
+            map[num] = 'FALSE';
+        } else if (['NG', 'NOT', 'N'].includes(firstToken) || value.toUpperCase().startsWith('NOT GIVEN')) {
+            map[num] = 'NOT GIVEN';
+        } else if (/^[A-D]$/.test(firstToken)) {
+            map[num] = firstToken; // Multiple choice: A/B/C/D
+        } else {
+            // Aks holda butun satrni javob matni sifatida saqlab qo'yamiz
+            map[num] = value;
+        }
+    }
+
+    console.log('✅ ANSWERS parsed:', map);
+    return map;
 }
