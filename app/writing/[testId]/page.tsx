@@ -6,7 +6,8 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 // import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { RefreshCw, Clock, AlertCircle, Check, ChevronLeft, ChevronRight } from "lucide-react"
+import { RefreshCw, Clock, AlertCircle, Check, ChevronLeft, ChevronRight, LogIn } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 
 // =========================================================
 // TEST CONFIGURATION
@@ -65,6 +66,7 @@ const SAMPLE_QUESTIONS = {
 export default function WritingTaskPage() {
   const params = useParams()
   const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
   const testId = params.testId as string
   
   const config = TEST_CONFIG[testId as keyof typeof TEST_CONFIG]
@@ -72,6 +74,48 @@ export default function WritingTaskPage() {
   if (!config) {
     router.push('/writing')
     return null
+  }
+
+  // Auth check
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-900">Yuklanmoqda...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg border-2 border-red-200 p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="text-red-600" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">Login bo'lishingiz shart</h2>
+          <p className="text-slate-600 mb-6">
+            Writing testlaridan foydalanish uchun tizimga kirishingiz kerak.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => router.push('/login')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => router.push('/register')}
+              variant="outline"
+            >
+              Ro'yxatdan o'tish
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const [questions, setQuestions] = useState<string[]>([])
@@ -407,73 +451,11 @@ export default function WritingTaskPage() {
               )}
             </div>
 
-            {/* AI Questions */}
-            {questions.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">AI Generated Questions:</h3>
-                <div className="space-y-2 mb-3">
-                  {questions.map((q, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        if (!testStarted && !submitted) {
-                          setCurrentQuestionIndex(idx)
-                          setUseCustomQuestion(false)
-                        }
-                      }}
-                      disabled={testStarted || submitted}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                        !useCustomQuestion && currentQuestionIndex === idx
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      } ${testStarted || submitted ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span className={`text-xs font-semibold ${!useCustomQuestion && currentQuestionIndex === idx ? 'text-blue-600' : 'text-slate-500'}`}>
-                          Q{idx + 1}
-                        </span>
-                        <p className="text-sm text-slate-900 flex-1">{q}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Task Prompt - Current Selected Question */}
+            {/* Current Question - Only show the selected question */}
             <div>
-              <p className="text-xs text-slate-500 mb-2">Current Question:</p>
-              <p className="text-slate-900 font-semibold text-base leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
-                {currentQuestion || "No question selected. Choose an AI question above or write your own below."}
+              <p className="text-slate-900 font-semibold text-base leading-relaxed">
+                {currentQuestion || "No question selected. Please select a question below or write your own."}
               </p>
-            </div>
-
-            {/* Custom Question Section */}
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 mb-2">Write Your Own Question (Optional):</h3>
-              <textarea
-                value={customQuestion}
-                onChange={(e) => setCustomQuestion(e.target.value)}
-                placeholder="Enter your custom writing question here..."
-                className="w-full p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm resize-none"
-                rows={3}
-                disabled={testStarted || submitted}
-              />
-              {customQuestion.trim() && (
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="useCustom"
-                    checked={useCustomQuestion}
-                    onChange={(e) => setUseCustomQuestion(e.target.checked)}
-                    disabled={testStarted || submitted}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="useCustom" className="text-xs text-slate-600 cursor-pointer">
-                    Use my custom question
-                  </label>
-                </div>
-              )}
             </div>
 
             {/* Recommendations */}
@@ -541,6 +523,68 @@ export default function WritingTaskPage() {
           style={{ width: `${100 - leftWidth}%` }}
         >
           <div className="p-6 h-full flex flex-col">
+            {/* Custom Question Card - Alohida card */}
+            <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3">Uzingizni writingiz</h3>
+              <textarea
+                value={customQuestion}
+                onChange={(e) => setCustomQuestion(e.target.value)}
+                placeholder="O'z savolingizni yozing..."
+                className="w-full p-3 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm resize-none bg-white"
+                rows={3}
+                disabled={testStarted || submitted}
+              />
+              {customQuestion.trim() && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="useCustom"
+                    checked={useCustomQuestion}
+                    onChange={(e) => setUseCustomQuestion(e.target.checked)}
+                    disabled={testStarted || submitted}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="useCustom" className="text-xs text-blue-700 cursor-pointer font-medium">
+                    Ushbu savolni ishlatish
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* AI Questions - Task 1, 2, 3 pastida */}
+            {questions.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">AI Generated Questions:</h3>
+                <div className="space-y-2">
+                  {questions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        if (!testStarted && !submitted) {
+                          setCurrentQuestionIndex(idx)
+                          setUseCustomQuestion(false)
+                        }
+                      }}
+                      disabled={testStarted || submitted}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                        !useCustomQuestion && currentQuestionIndex === idx
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      } ${testStarted || submitted ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className={`text-xs font-semibold ${!useCustomQuestion && currentQuestionIndex === idx ? 'text-blue-600' : 'text-slate-500'}`}>
+                          Q{idx + 1}
+                        </span>
+                        <p className="text-sm text-slate-900 flex-1">{q}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Writing Area */}
             {testStarted && !submitted ? (
               <>
                 <textarea
@@ -549,7 +593,7 @@ export default function WritingTaskPage() {
                   placeholder="Start writing your essay here..."
                   className="w-full flex-grow p-4 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none text-base resize-none"
                   disabled={timeUp}
-                  style={{ minHeight: 'calc(100vh - 200px)' }}
+                  style={{ minHeight: 'calc(100vh - 400px)' }}
                 />
                 <div className="mt-4 flex justify-between items-center">
                   <span className="text-sm text-slate-600">
@@ -670,9 +714,10 @@ export default function WritingTaskPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex-grow flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-slate-500 mb-4">Click "Start Test" to begin writing</p>
+              <div className="flex-grow flex items-center justify-center border-2 border-dashed border-slate-300 rounded-lg">
+                <div className="text-center p-8">
+                  <p className="text-slate-500 mb-4">Savolni tanlang va "Start Test" tugmasini bosing</p>
+                  <p className="text-sm text-slate-400">Yoki o'z savolingizni yozing</p>
                 </div>
               </div>
             )}

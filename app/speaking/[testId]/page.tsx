@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { notFound } from "next/navigation"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 // import Navigation from "@/components/navigation"
 // import Footer from "@/components/footer"
@@ -17,7 +17,9 @@ import {
   HelpCircle,
   CheckCircle,
   AlertCircle,
+  LogIn,
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 
 // =========================================================
 // AI GENERATION FUNCTION
@@ -83,6 +85,8 @@ function getTestTitle(testId: string): string {
 
 export default function SpeakingTestPage() {
   const params = useParams()
+  const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const testId = params.testId as string
   const testTitle = getTestTitle(testId)
 
@@ -415,12 +419,58 @@ export default function SpeakingTestPage() {
   // =========================================================
   // RENDER
   // =========================================================
+  
+  // Auth check
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-900">Yuklanmoqda...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg border-2 border-red-200 p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="text-red-600" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">Login bo'lishingiz shart</h2>
+          <p className="text-slate-600 mb-6">
+            Speaking testlaridan foydalanish uchun tizimga kirishingiz kerak.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => router.push('/login')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => router.push('/register')}
+              variant="outline"
+            >
+              Ro'yxatdan o'tish
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loadingQuestions) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
+      <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         {/* <Navigation /> */}
         <main className="flex-grow flex items-center justify-center">
-          <p className="text-white text-xl">Loading AI-generated questions...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-900 text-xl">Loading AI-generated questions...</p>
+          </div>
         </main>
         {/* <Footer /> */}
       </div>
@@ -664,21 +714,67 @@ export default function SpeakingTestPage() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
       {/* <Navigation /> */}
 
-      <main className="flex-grow py-8 sm:py-12 px-3 sm:px-6 lg:px-8 flex justify-center">
-        <div className="max-w-3xl w-full text-center text-slate-900">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">{testTitle}</h1>
-          <p className="text-sm sm:text-base text-slate-600 mb-10">Record your answer and get instant feedback.</p>
-
-          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
-            {/* Question */}
-            <div className="mb-8">
-              <p className="text-xs uppercase text-blue-600 font-bold mb-2">
-                Question {currentQuestionIndex + 1} / {questions.length}
-              </p>
-              <p className="text-xl sm:text-2xl text-slate-900 font-semibold italic whitespace-pre-line">
-                {questions[currentQuestionIndex]}
-              </p>
+      <main className="flex-grow py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Questions List */}
+            <div className="lg:col-span-1">
+              <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Barcha Savollar:</h3>
+                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                  {questions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        if (!isRecording && !checking) {
+                          setCurrentQuestionIndex(idx)
+                          setCurrentTranscript("")
+                          setTranscripts([])
+                          setShowResults(false)
+                          setGrammarResult(null)
+                          setLogicResult(null)
+                          setFeedback({})
+                          setStrengths([])
+                          setImprovements([])
+                          setScores({ fluency: 0, pronunciation: 0, grammar: 0, vocabulary: 0 })
+                        }
+                      }}
+                      disabled={isRecording || checking}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                        currentQuestionIndex === idx
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      } ${isRecording || checking ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className={`text-xs font-semibold ${currentQuestionIndex === idx ? 'text-blue-600' : 'text-slate-500'}`}>
+                          Q{idx + 1}
+                        </span>
+                        <p className="text-xs text-slate-900 flex-1 line-clamp-2">{q}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Right Column - Main Content */}
+            <div className="lg:col-span-2">
+              <div className="text-center text-slate-900 mb-6">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">{testTitle}</h1>
+                <p className="text-sm sm:text-base text-slate-600 mb-10">Record your answer and get instant feedback.</p>
+              </div>
+
+              <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
+                {/* Question */}
+                <div className="mb-8">
+                  <p className="text-xs uppercase text-blue-600 font-bold mb-2">
+                    Question {currentQuestionIndex + 1} / {questions.length}
+                  </p>
+                  <p className="text-xl sm:text-2xl text-slate-900 font-semibold italic whitespace-pre-line">
+                    {questions[currentQuestionIndex]}
+                  </p>
+                </div>
 
             {/* Mic button */}
             <div className="flex justify-center mb-8">
@@ -752,6 +848,8 @@ export default function SpeakingTestPage() {
                 >
                   {checking ? "Checking..." : "Check & Analyze"}
                 </Button>
+              </div>
+            </div>
               </div>
             </div>
           </div>

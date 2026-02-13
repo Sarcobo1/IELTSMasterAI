@@ -21,19 +21,84 @@ export async function POST(req: NextRequest) {
     let prompt = "";
 
     if (testId === "part-1") {
-      prompt = `Generate ${count} IELTS Speaking Part 1 questions. 
-Respond ONLY in JSON: {"questions": ["q1","q2"]}`;
+      prompt = `Generate ${count} completely independent IELTS Speaking Part 1 questions for Introduction & Interview section.
+
+DIFFICULTY LEVEL: EASY/BEGINNER
+- These are simple, personal questions for warm-up conversation
+- Topics: home, work, studies, hobbies, family, hometown, daily routines, food, weather, etc.
+- Use simple present tense and basic vocabulary
+- Questions should be short and direct
+
+Each question must be:
+- A complete, standalone question that can be understood without any context
+- Simple and easy to understand (beginner-friendly)
+- About personal, everyday topics
+- Examples: "Where do you live?", "What do you do for work?", "Do you enjoy reading books?", "What's your favorite food?", "How do you usually spend your weekends?"
+- NEVER use: "What it was that you had to learn", "Tell me about that", "How do you feel about it?" (vague pronouns)
+
+IMPORTANT: Each question must be independent, complete, and EASY. Use simple language suitable for beginners.
+
+Respond ONLY in JSON format: {"questions": ["Complete question 1", "Complete question 2", ...]}`;
     }
 
     if (testId === "part-2") {
-      prompt = `Generate ${count} IELTS Speaking Part 2 cue cards.
-Respond ONLY in JSON: {"questions": ["topic1"]}`;
+      prompt = `Generate ${count} completely independent IELTS Speaking Part 2 cue cards.
+
+DIFFICULTY LEVEL: INTERMEDIATE
+- These are moderately challenging topics requiring 1-2 minutes of speaking
+- Topics: experiences, places, people, objects, events, activities
+- Require some vocabulary and ability to organize thoughts
+
+Each cue card must be:
+- A complete, standalone topic that can be understood without any context
+- Starting with "Describe..." or "Talk about..."
+- Include 3-4 bullet points with specific points to cover
+- Moderate difficulty - not too easy, not too complex
+- Examples of GOOD cue cards:
+"Describe a place you visited that you enjoyed.
+You should say:
+- where it was
+- when you went there
+- what you did there
+and explain why you enjoyed it."
+
+"Talk about a person who has influenced you.
+You should say:
+- who this person is
+- how you know them
+- what they have done
+and explain why they influenced you."
+
+IMPORTANT: Each cue card must be independent, complete, and MODERATELY CHALLENGING. Use intermediate-level topics.
+
+Respond ONLY in JSON format: {"questions": ["Complete cue card 1", "Complete cue card 2", ...]}`;
     }
 
     if (testId === "part-3") {
-      prompt = `Generate ${count} IELTS Speaking Part 3 questions.
-Topic base: "${part2Topic}".
-Respond ONLY in JSON: {"questions": ["q1","q2"]}`;
+      prompt = `Generate ${count} completely independent IELTS Speaking Part 3 questions.
+Topic theme: "${part2Topic || "general discussion"}"
+
+DIFFICULTY LEVEL: ADVANCED/DIFFICULT
+- These are challenging, abstract questions requiring deep thinking
+- Topics: abstract ideas, opinions, analysis, comparisons, predictions, solutions
+- Require advanced vocabulary, complex grammar, and critical thinking
+- Questions should provoke thoughtful, extended responses
+
+Each question must be:
+- A complete, standalone question that can be understood without any context
+- ADVANCED and CHALLENGING - requiring deep analysis and sophisticated language
+- About abstract concepts, social issues, future trends, comparisons, or complex opinions
+- Examples of GOOD ADVANCED questions: 
+  "What are the long-term implications of artificial intelligence on employment?"
+  "How do cultural differences influence educational systems around the world?"
+  "To what extent should governments regulate social media platforms?"
+  "What are the advantages and disadvantages of globalization for developing countries?"
+  "How might climate change policies affect economic growth in the next decade?"
+- NEVER use: "What it was that you had to learn", "Tell me more about that", "How do you feel about it?" (vague pronouns)
+
+IMPORTANT: Each question must be independent, complete, and ADVANCED/DIFFICULT. Use complex topics that require sophisticated vocabulary and critical thinking.
+
+Respond ONLY in JSON format: {"questions": ["Complete question 1", "Complete question 2", ...]}`;
     }
 
     // Writing tasks
@@ -70,7 +135,7 @@ Respond ONLY in JSON: {"questions": ["question1", "question2"]}`;
             {
               role: "system",
               content:
-                "You generate clean JSON only. Never add explanations or extra text.",
+                "You are an IELTS question generator. Generate clean JSON only. Never add explanations or extra text. Each question must be complete and independent - never reference other questions or use vague pronouns without clear context.",
             },
             { role: "user", content: prompt },
           ],

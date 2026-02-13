@@ -207,13 +207,8 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
     const router = useRouter()
     const { testId } = use(params) as { testId: string }
     const readingData = findTestById(testId)
-    if (!readingData) {
-        return <div className="p-8 text-center text-red-600 font-bold">Test topilmadi!</div>
-    }
     const { isAuthenticated, isLoading, user } = useAuth()
     const [hasPremium, setHasPremium] = useState(false)
-
-    const [timeLeft, setTimeLeft] = useState(3600)
     const [running, setRunning] = useState(false)
     const [paused, setPaused] = useState(false)
     const [leftWidth, setLeftWidth] = useState(50)
@@ -226,6 +221,54 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
     const [score, setScore] = useState<number | null>(null)
     const inputRefs = useRef<Record<number, HTMLInputElement | null>>({})
     const [isFullscreen, setIsFullscreen] = useState(false)
+
+    if (!readingData) {
+        return <div className="p-8 text-center text-red-600 font-bold">Test topilmadi!</div>
+    }
+
+    // Auth check
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p>Yuklanmoqda...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="max-w-md w-full bg-white rounded-xl shadow-lg border-2 border-red-200 p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-3">Login bo'lishingiz shart</h2>
+                    <p className="text-slate-600 mb-6">
+                        Reading testlaridan foydalanish uchun tizimga kirishingiz kerak.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                        <button
+                            onClick={() => router.push('/login')}
+                            className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                        >
+                            Login
+                        </button>
+                        <button
+                            onClick={() => router.push('/register')}
+                            className="px-4 py-2 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300"
+                        >
+                            Ro'yxatdan o'tish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     // Premium status check (localStorage same as premium page)
     useEffect(() => {
@@ -523,10 +566,22 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
                                                 const isCurrent = currentQuestion === q.id
                                                 const limit = getWordLimit(q.id)
                                                 const type = q.type || "gap_fill"
-                                                const getOptionValue = (opt: string) => opt.split(".")[0].trim() || opt
+                                                const getOptionValue = (opt: string) => {
+                                                    // Agar option faqat harf bo'lsa (masalan "A", "B", "C"), uni qaytaradi
+                                                    if (/^[A-H]$/.test(opt.trim())) {
+                                                        return opt.trim()
+                                                    }
+                                                    // Aks holda, nuqta bilan ajratilgan qismni oladi
+                                                    return opt.split(".")[0].trim() || opt
+                                                }
                                                 let optionsToShow = q.options
                                                 if (type === "tfng" && (!optionsToShow || optionsToShow.length === 0)) {
                                                     optionsToShow = ["TRUE", "FALSE", "NOT GIVEN"]
+                                                }
+                                                // Agar options faqat harflar bo'lsa (masalan ["A", "B", "C"]), ularni paragraph harflari sifatida ko'rsatish
+                                                if (optionsToShow && optionsToShow.length > 0 && optionsToShow.every((opt: string) => /^[A-H]$/.test(opt.trim()))) {
+                                                    // Paragraph harflari sifatida ko'rsatish
+                                                    optionsToShow = optionsToShow.map((opt: string) => `${opt}.`)
                                                 }
                                                 const questionText = q.statement || q.question || q.pre || q.post || "Savol matni mavjud emas"
                                                 const isCorrect = showResults && normalize(answers[q.id] || "") === normalize(q.answer || "")
@@ -569,6 +624,8 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
                                                                     {optionsToShow?.map((opt, idx) => {
                                                                         const optionValue = getOptionValue(opt)
                                                                         const isSelected = answers[q.id] === optionValue
+                                                                        // Agar option faqat harf bo'lsa, uni paragraph harfi sifatida ko'rsatish
+                                                                        const displayText = /^[A-H]\.?$/.test(opt.trim()) ? opt.trim().replace('.', '') : opt
                                                                         return (
                                                                             <label
                                                                                 key={idx}
@@ -584,7 +641,7 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
                                                                                     onFocus={() => setCurrentQuestion(q.id)}
                                                                                     className="text-blue-600 focus:ring-blue-500"
                                                                                 />
-                                                                                <span className="text-sm">{opt}</span>
+                                                                                <span className="text-sm font-semibold">{displayText}.</span>
                                                                             </label>
                                                                         )
                                                                     })}

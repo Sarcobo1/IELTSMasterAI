@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, Mic, Image as ImageIcon, X, Bot, User, Sparkles, CheckCircle2, Wand2, Trash2 } from 'lucide-react';
+import { Send, Loader2, Mic, Image as ImageIcon, X, Bot, User, Sparkles, CheckCircle2, Wand2, Trash2, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 // --- Types ---
 interface Correction {
@@ -29,6 +30,9 @@ interface ChatMessage {
 }
 
 export default function GrammarTutorPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const router = useRouter()
+  
   // --- States ---
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -38,14 +42,54 @@ export default function GrammarTutorPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | undefined>(undefined);
   const [questionCount, setQuestionCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // --- Refs ---
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const messageIdCounter = useRef(0);
+
+  // Auth check
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#F8FAFC]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-700">Yuklanmoqda...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg border-2 border-red-200 p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="text-red-600" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">Login bo'lishingiz shart</h2>
+          <p className="text-slate-600 mb-6">
+            Grammar Tutor dan foydalanish uchun tizimga kirishingiz kerak.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => router.push('/login')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => router.push('/register')}
+              variant="outline"
+            >
+              Ro'yxatdan o'tish
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // --- Helpers & Logic ---
   const generateMessageId = () => {
@@ -62,9 +106,6 @@ export default function GrammarTutorPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // AuthContext ham ishlatadi: 'authToken'
-      const token = localStorage.getItem('authToken');
-      setIsLoggedIn(!!token);
       const count = parseInt(localStorage.getItem('questionCount') || '0', 10);
       setQuestionCount(count);
       
@@ -132,7 +173,7 @@ export default function GrammarTutorPage() {
     });
 
     // --- LOGIC: Bepul savollar limitini tekshirish ---
-    if (currentMode === 'chat' && !isLoggedIn && questionCount >= 5) {
+    if (currentMode === 'chat' && !isAuthenticated && questionCount >= 5) {
         // Tizimga kirish talab qilinishi haqida xabar qo'shamiz
         const limitMessage: ChatMessage = { 
             id: generateMessageId(), 
@@ -240,7 +281,7 @@ export default function GrammarTutorPage() {
       }
       
       // Savollar sonini yangilash
-      if (currentMode === 'chat' && !isLoggedIn) {
+      if (currentMode === 'chat' && !isAuthenticated) {
          setQuestionCount(p => { 
              const newVal = p + 1;
              localStorage.setItem('questionCount', newVal.toString()); 
