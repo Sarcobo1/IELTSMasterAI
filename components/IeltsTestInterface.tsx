@@ -417,8 +417,28 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
         let correctCount = 0;
         allQuestions.forEach(q => {
             const userAnswer = answers[q.id]?.trim().toUpperCase();
-            const correctAnswer = q.answer.trim().toUpperCase();
-            
+            let correctAnswer = q.answer.trim().toUpperCase();
+
+            // Multiple choice uchun: agar javob matn bo'lsa, uni variant harfiga map qilamiz
+            if ((q.type === 'multiple_choice' || q.type === 'tfng') && q.options && q.options.length > 0) {
+                // Variantlarni A/B/C/D + matn ko'rinishida normalizatsiya qilish
+                const normalizedOptions = q.options.map((opt, idx) => {
+                    const match = opt.match(/^([A-Z])\.\s*(.+)$/);
+                    if (match) {
+                        return { code: match[1].toUpperCase(), text: match[2].trim().toUpperCase() };
+                    }
+                    return { code: String.fromCharCode(65 + idx), text: opt.trim().toUpperCase() }; // A,B,C,D,...
+                });
+
+                // Agar correctAnswer matn bo'lsa, mos kelgan variant kodini topamiz
+                if (correctAnswer.length > 1) {
+                    const found = normalizedOptions.find(o => o.text === correctAnswer);
+                    if (found) {
+                        correctAnswer = found.code;
+                    }
+                }
+            }
+
             if (userAnswer === correctAnswer) {
                 correctCount++;
             }
@@ -574,10 +594,23 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                         optionsToShow = ['TRUE', 'FALSE', 'NOT GIVEN'];
                                                     }
                                                     
-                                                    // Agar variantlarda "A. ..." prefiksi bo'lmasa, faqat ko'rinish uchun qo'shamiz
-                                                    if ((q.type === 'multiple_choice' || q.type === 'tfng') && optionsToShow && optionsToShow.every(opt => !opt.match(/^[A-Z]\.\s/))) {
-                                                        optionsToShow = optionsToShow.map((opt, idx) => `${String.fromCharCode(65 + idx)}. ${opt}`);
-                                                    }
+                                                    // Variantlarni harf + matn ko'rinishida normalizatsiya qilish
+                                                    const normalizedOptions = (optionsToShow || []).map((opt, idx) => {
+                                                        const match = opt.match(/^([A-Z])\.\s*(.+)$/);
+                                                        if (match) {
+                                                            return {
+                                                                raw: opt,
+                                                                code: match[1].toUpperCase(),
+                                                                label: `${match[1].toUpperCase()}. ${match[2].trim()}`
+                                                            };
+                                                        }
+                                                        const code = String.fromCharCode(65 + idx); // A,B,C,D,...
+                                                        return {
+                                                            raw: opt,
+                                                            code,
+                                                            label: `${code}. ${opt.trim()}`
+                                                        };
+                                                    });
 
 
                                                     return (
@@ -624,11 +657,17 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                     </span>
                                                                     
                                                                     <div className="space-y-2 ml-4">
-                                                                        {optionsToShow?.map((opt, idx) => {
-                                                                            // Ekrandagi matndan "A. " prefiksini olib tashlab, asl javob matnini olamiz
-                                                                            const optionLabel = opt.replace(/^[A-Z]\.\s?/, '').trim();
-                                                                            const isOptionCorrect = showResults && correctAnswer.toUpperCase() === optionLabel.toUpperCase();
-                                                                            const isOptionSelected = userAnswer.toUpperCase() === optionLabel.toUpperCase();
+                                                                        {normalizedOptions.map((opt, idx) => {
+                                                                            // Foydalanuvchi qiymati va to'g'ri javob harf (A/B/C/...) bo'yicha saqlanadi
+                                                                            let normalizedCorrect = correctAnswer.toUpperCase();
+
+                                                                            // Agar correctAnswer matn bo'lsa, uni shu variant kodiga map qilamiz
+                                                                            if (normalizedCorrect.length > 1 && normalizedCorrect === opt.raw.trim().toUpperCase().replace(/^[A-Z]\.\s*/, '')) {
+                                                                                normalizedCorrect = opt.code;
+                                                                            }
+
+                                                                            const isOptionCorrect = showResults && normalizedCorrect === opt.code;
+                                                                            const isOptionSelected = userAnswer === opt.code;
                                                                             const isOptionIncorrectlySelected = showResults && isOptionSelected && !isOptionCorrect;
                                                                             
                                                                             return (
@@ -637,7 +676,7 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                                         ref={idx === 0 ? (el) => { inputRefs.current[currentQId] = el as HTMLInputElement } : undefined}
                                                                                         type="radio"
                                                                                         name={`q_${currentQId}`}
-                                                                                        value={optionLabel} 
+                                                                                        value={opt.code} 
                                                                                         checked={isOptionSelected}
                                                                                         onChange={(e) => handleAnswerChange(currentQId, e.target.value)}
                                                                                         onFocus={() => handleQuestionClick(currentQId)}
@@ -645,7 +684,7 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                                         className="mt-1 mr-3 text-blue-600 focus:ring-blue-500"
                                                                                     />
                                                                                     <span className={`text-gray-800 flex-1 ${isOptionCorrect ? 'font-bold text-green-700' : ''}`}>
-                                                                                        {optionLabel} 
+                                                                                        {opt.label} 
                                                                                         {showResults && isOptionCorrect && <CheckCircle size={16} className="text-green-600 ml-2 inline" />}
                                                                                         {showResults && isOptionIncorrectlySelected && <XCircle size={16} className="text-red-600 ml-2 inline" />}
                                                                                     </span>
