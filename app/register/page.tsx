@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { UserPlus } from "lucide-react"
 import { useRouter } from 'next/navigation';
 
@@ -138,7 +138,7 @@ export default function RegisterPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

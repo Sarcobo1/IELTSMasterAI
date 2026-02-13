@@ -242,6 +242,15 @@ const FileUploadPage: React.FC = () => {
                     <span className="font-semibold text-red-600">Kunlik limit: 1 ta test</span>
                 </p>
 
+                <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left">
+                    <p className="text-sm font-semibold text-amber-900 mb-1">Eslatma (PDF format):</p>
+                    <p className="text-sm text-amber-800">
+                        Har bir PDF oxirida <span className="font-bold">ANSWERS</span> yoki <span className="font-bold">ANSWER</span> degan bo‘lim bo‘lsin va uning pastida
+                        savollar raqamiga mos <span className="font-semibold">javoblar</span> yozilgan bo‘lsin. Shu bo‘lim bo‘lmasa yoki noto‘g‘ri bo‘lsa, testda javoblar
+                        xato chiqishi mumkin.
+                    </p>
+                </div>
+
                 {/* Yuklash tugmasi */}
                 <button
                     type="submit"

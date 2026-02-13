@@ -5,7 +5,7 @@ import Sidebar from "../vocabulary/page1";
 import VocabularyCard, { VocabularyItem } from "../vocabulary/page"; // ✅ Type import qildik
 import { vocabularyData } from "../vocabulary/vocabulary";
 import { BookOpen, Sparkles } from "lucide-react";
-import Footer from "@/components/footer";
+// import Footer from "@/components/footer";
 
 export default function VocabularyPage() {
   const [selectedTopic, setSelectedTopic] = useState<string>("Environment");
@@ -155,7 +155,7 @@ export default function VocabularyPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

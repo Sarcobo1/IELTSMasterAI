@@ -6,7 +6,7 @@ import { notFound } from "next/navigation"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 // import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import {
   Mic,
   RotateCcw,
@@ -422,7 +422,7 @@ export default function SpeakingTestPage() {
         <main className="flex-grow flex items-center justify-center">
           <p className="text-white text-xl">Loading AI-generated questions...</p>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     )
   }
@@ -652,7 +652,7 @@ export default function SpeakingTestPage() {
           </div>
         </main>
 
-        <Footer />
+        {/* <Footer /> */}
       </div>
     )
   }
@@ -661,21 +661,21 @@ export default function SpeakingTestPage() {
   // MAIN RECORDING SCREEN
   // =========================================================
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
       {/* <Navigation /> */}
 
       <main className="flex-grow py-8 sm:py-12 px-3 sm:px-6 lg:px-8 flex justify-center">
-        <div className="max-w-3xl w-full text-center text-white">
+        <div className="max-w-3xl w-full text-center text-slate-900">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">{testTitle}</h1>
-          <p className="text-sm sm:text-base text-gray-300 mb-10">Record your answer and get instant feedback.</p>
+          <p className="text-sm sm:text-base text-slate-600 mb-10">Record your answer and get instant feedback.</p>
 
-          <div className="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-lg border border-slate-700">
+          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200">
             {/* Question */}
             <div className="mb-8">
-              <p className="text-xs uppercase text-blue-400 font-bold mb-2">
+              <p className="text-xs uppercase text-blue-600 font-bold mb-2">
                 Question {currentQuestionIndex + 1} / {questions.length}
               </p>
-              <p className="text-xl sm:text-2xl text-gray-100 font-semibold italic whitespace-pre-line">
+              <p className="text-xl sm:text-2xl text-slate-900 font-semibold italic whitespace-pre-line">
                 {questions[currentQuestionIndex]}
               </p>
             </div>
@@ -696,10 +696,10 @@ export default function SpeakingTestPage() {
 
             {isRecording && (
               <div className="text-center mb-6">
-                <p className="text-2xl sm:text-3xl font-bold text-red-400 mb-2">
+                <p className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">
                   {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, "0")}
                 </p>
-                <p className="text-red-300 text-sm animate-pulse">
+                <p className="text-red-600 text-sm animate-pulse">
                   Recording in progress... Click mic to stop and check.
                 </p>
               </div>
@@ -707,19 +707,19 @@ export default function SpeakingTestPage() {
 
             {/* Transcript */}
             <div className="mt-6 text-left">
-              <h3 className="text-md font-semibold text-gray-200 mb-2">Live Transcript / History</h3>
-              <div className="bg-slate-900 p-4 rounded text-gray-200 min-h-[120px] max-h-[300px] overflow-y-auto border border-slate-700">
+              <h3 className="text-md font-semibold text-slate-900 mb-2">Live Transcript / History</h3>
+              <div className="bg-slate-50 p-4 rounded text-slate-900 min-h-[120px] max-h-[300px] overflow-y-auto border border-slate-200">
                 {currentTranscript || transcripts.length > 0 ? (
                   <div className="space-y-3">
                     {currentTranscript && (
-                      <div className="border-b border-slate-700 pb-2">
-                        <div className="text-xs text-blue-400 font-semibold">Live (Interim)</div>
+                      <div className="border-b border-slate-300 pb-2">
+                        <div className="text-xs text-blue-600 font-semibold">Live (Interim)</div>
                         <div className="mt-1 text-lg italic">{currentTranscript}</div>
                       </div>
                     )}
                     {transcripts.map((t, i) => (
-                      <div key={i} className="border-b border-slate-800 pb-2">
-                        <div className="text-xs text-slate-400">
+                      <div key={i} className="border-b border-slate-200 pb-2">
+                        <div className="text-xs text-slate-500">
                           {new Date(t.at).toLocaleTimeString()}
                         </div>
                         <div className="mt-1">{t.text}</div>
@@ -727,7 +727,7 @@ export default function SpeakingTestPage() {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-500">No recording started yet.</span>
+                  <span className="text-slate-500">No recording started yet.</span>
                 )}
               </div>
 
@@ -741,7 +741,7 @@ export default function SpeakingTestPage() {
                     recognitionBufferRef.current = ""
                     localStorage.removeItem(`speaking:${testId}:transcripts`)
                   }}
-                  className="bg-gray-700 hover:bg-gray-600"
+                  className="bg-gray-200 hover:bg-gray-300 text-slate-900"
                 >
                   Clear History
                 </Button>
@@ -758,7 +758,7 @@ export default function SpeakingTestPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

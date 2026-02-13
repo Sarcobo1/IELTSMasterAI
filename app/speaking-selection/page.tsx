@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 // import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Clock, MessageSquare, Mic, Users } from "lucide-react"
 
@@ -131,7 +131,7 @@ export default function SpeakingSelectionPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

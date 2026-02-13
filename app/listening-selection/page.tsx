@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Volume2, Clock, BarChart3, Play, Headphones, Sparkles, Activity, Users, ArrowRight } from "lucide-react"
 
 // Test ma'lumotlari (Ranglar va ikonkalarni boyitdik)
@@ -134,7 +134,7 @@ export default function ListeningSelectionPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

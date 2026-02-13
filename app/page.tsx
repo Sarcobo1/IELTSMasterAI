@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { ArrowRight, Mic, BookOpen, PenTool, Volume2, Globe, Sparkles, Zap, CheckCircle2, Target, X, BarChart3, Trophy, ChevronRight } from "lucide-react"
 import Typed from "typed.js"
 
@@ -321,7 +321,7 @@ export default function Home() {
         )}
 
       </main>
-      <Footer />
+      {/* <Footer /> */}
       
       {/* GLOBAL STYLES & ANIMATIONS */}
       <style jsx global>{`

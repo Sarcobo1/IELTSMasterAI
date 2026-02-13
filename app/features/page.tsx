@@ -1,5 +1,5 @@
 // import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Mic, PenTool, BookOpen, Volume2, Globe } from "lucide-react"
 
 export default function FeaturesPage() {
@@ -68,7 +68,7 @@ export default function FeaturesPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

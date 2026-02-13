@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Script from "next/script"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Search, MessageCircle, HelpCircle, BookOpen, CreditCard, Shield, Sparkles, ChevronDown } from "lucide-react"
 
 const faqs = [
@@ -342,7 +342,7 @@ export default function SupportPage() {
         </section>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

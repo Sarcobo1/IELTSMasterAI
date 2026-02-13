@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { LogIn } from "lucide-react"
 import { useRouter } from 'next/navigation';
 
@@ -120,7 +120,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

@@ -36,6 +36,25 @@ Topic base: "${part2Topic}".
 Respond ONLY in JSON: {"questions": ["q1","q2"]}`;
     }
 
+    // Writing tasks
+    if (testId === "task-1") {
+      prompt = `Generate ${count} IELTS Writing Task 1 questions. Task 1 requires describing charts, graphs, tables, diagrams, or processes.
+Each question should be a complete prompt that asks the candidate to summarize, describe, or report information from visual data.
+Respond ONLY in JSON: {"questions": ["question1", "question2"]}`;
+    }
+
+    if (testId === "task-2") {
+      prompt = `Generate ${count} IELTS Writing Task 2 questions. Task 2 requires writing an opinion essay, discussion essay, or problem-solution essay.
+Each question should be a complete prompt that asks for the candidate's opinion, discussion of both views, or analysis of a problem.
+Respond ONLY in JSON: {"questions": ["question1", "question2"]}`;
+    }
+
+    if (testId === "task-3") {
+      prompt = `Generate ${count} IELTS Writing Task 3 questions. Task 3 requires advanced discussion and critical analysis of complex topics.
+Each question should be a complete prompt that requires deep analysis, evaluation, and sophisticated argumentation.
+Respond ONLY in JSON: {"questions": ["question1", "question2"]}`;
+    }
+
     // Call Groq API
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",

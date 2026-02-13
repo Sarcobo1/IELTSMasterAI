@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback, use } from "react"
-import { Fullscreen, Bell, Settings, ChevronLeft, ChevronRight, X, Maximize2 } from "lucide-react"
+import { Fullscreen, ChevronLeft, ChevronRight, X, Maximize2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import readingDataRaw from "../../reading_data/all_reading_data.json"
 import { useAuth } from "@/context/AuthContext"
@@ -57,19 +57,13 @@ const IeltsNavbar = ({
     onStart,
     onFullscreen,
     onBack,
-    onSettings,
-    level,
-    theme,
-    onToggleTheme
+    level
 }: {
     timeLeft: number
     onStart: () => void
     onFullscreen: () => void
     onBack: () => void
-    onSettings: () => void
     level: string
-    theme: "light" | "dark"
-    onToggleTheme: () => void
 }) => {
 
     const formatTime = (seconds: number) => {
@@ -79,7 +73,7 @@ const IeltsNavbar = ({
     }
 
     return (
-        <div className={`h-[50px] flex items-center justify-between px-3 border-b border-gray-300 shrink-0 select-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-gray-800'}`}>
+        <div className="h-[50px] flex items-center justify-between px-3 border-b border-gray-300 shrink-0 select-none bg-white text-gray-800">
             <div className="flex items-center gap-4">
                 <button onClick={onBack} className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
                     <ChevronLeft size={18} className="mr-1" /> Back
@@ -102,22 +96,6 @@ const IeltsNavbar = ({
             <div className="flex items-center gap-3">
                 <button onClick={onFullscreen} className="p-1 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
                     <Maximize2 size={20}/>
-                </button>
-                <button className="p-1 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
-                    <Bell size={20}/>
-                </button>
-                <button 
-                    onClick={onSettings}
-                    className="p-1 rounded-full text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                    <Settings size={20}/>
-                </button>
-                <button
-                    onClick={onToggleTheme}
-                    className="p-1 rounded-full text-gray-600 hover:bg-gray-100 transition-colors border border-gray-300"
-                    title="Toggle dark/light mode"
-                >
-                    {theme === 'dark' ? '🌙' : '☀️'}
                 </button>
             </div>
         </div>
@@ -247,8 +225,6 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
     const [showResults, setShowResults] = useState(false)
     const [score, setScore] = useState<number | null>(null)
     const inputRefs = useRef<Record<number, HTMLInputElement | null>>({})
-    const [settingsOpen, setSettingsOpen] = useState(false)
-    const [theme, setTheme] = useState<"light" | "dark">("light")
     const [isFullscreen, setIsFullscreen] = useState(false)
 
     // Premium status check (localStorage same as premium page)
@@ -318,20 +294,6 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
         router.push("/reading-selection")
     }
 
-    // ========== SETTINGS ============
-    const toggleTheme = () => {
-        setTheme(prev => prev === "light" ? "dark" : "light")
-    }
-
-    useEffect(() => {
-        if (theme === "dark") {
-            document.body.classList.add("bg-black", "text-white")
-            document.body.classList.remove("bg-white", "text-black")
-        } else {
-            document.body.classList.add("bg-white", "text-black")
-            document.body.classList.remove("bg-black", "text-white")
-        }
-    }, [theme])
 
 
     // ========== DRAG PANEL ============
@@ -488,7 +450,7 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
     }
 
     return (
-        <div className={`flex flex-col h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-100'}`}>
+        <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-100">
             
             {!isFullscreen && (
                 <IeltsNavbar
@@ -496,10 +458,7 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
                     onStart={handleStart}
                     onFullscreen={handleFullscreen}
                     onBack={handleBack}
-                    onSettings={() => setSettingsOpen(true)}
                     level={readingData.level}
-                    theme={theme}
-                    onToggleTheme={toggleTheme}
                 />
             )}
 
@@ -686,29 +645,6 @@ export default function IeltsTestInterface({ params }: { params: Promise<Params>
                 onPartSelect={handlePartSwitch}
             />
 
-            {/* SETTINGS MODAL */}
-            {settingsOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-                    <div className="bg-white text-black p-6 rounded shadow-lg w-64">
-
-                        <h2 className="font-bold text-lg mb-4">Settings</h2>
-
-                        <button
-                            onClick={toggleTheme}
-                            className="w-full bg-gray-800 text-white py-2 rounded mb-3"
-                        >
-                            Toggle Dark / Light Mode
-                        </button>
-
-                        <button
-                            onClick={() => setSettingsOpen(false)}
-                            className="w-full bg-red-600 text-white py-2 rounded"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {/* Custom Scrollbar */}
             <style jsx global>{`

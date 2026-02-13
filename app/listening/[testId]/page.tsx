@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 // import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Play, Pause, Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react"
 
 // Savol turlari uchun interface (agar Typescript qullanilayotgan bo'lsa)
@@ -496,9 +496,16 @@ const handleStartPart2 = () => {
     // === Natijalar (Part 1 natijasi) ===
     if (testStage === 'results1') {
         return (
-            <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+            <div className="min-h-screen flex flex-col bg-white overflow-x-hidden relative">
+                {/* Blur overlay */}
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <h1 className="text-5xl font-bold text-slate-700 mb-4">Soon</h1>
+                        <p className="text-xl text-slate-500">This feature is coming soon</p>
+                    </div>
+                </div>
                 {/* <Navigation /> */}
-                <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
+                <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8 blur-sm pointer-events-none">
                     <div className="max-w-4xl mx-auto">
                         <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 flex items-center gap-2">
                             <CheckCircle size={32} className="text-blue-500" /> Part 1 Result (1-10)
@@ -519,7 +526,7 @@ const handleStartPart2 = () => {
                         </Button>
                     </div>
                 </main>
-                <Footer />
+                {/* <Footer /> */}
             </div>
         )
     }
@@ -527,9 +534,16 @@ const handleStartPart2 = () => {
     // === Natijalar (Yakuniy natija) ===
     if (testStage === 'final') {
         return (
-            <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+            <div className="min-h-screen flex flex-col bg-white overflow-x-hidden relative">
+                {/* Blur overlay */}
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <h1 className="text-5xl font-bold text-slate-700 mb-4">Soon</h1>
+                        <p className="text-xl text-slate-500">This feature is coming soon</p>
+                    </div>
+                </div>
                 {/* <Navigation /> */}
-                <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
+                <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8 blur-sm pointer-events-none">
                     <div className="max-w-4xl mx-auto">
                         <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 flex items-center gap-2">
                              <CheckCircle size={32} className="text-blue-500" /> Test Completed
@@ -546,16 +560,23 @@ const handleStartPart2 = () => {
                         </Button>
                     </div>
                 </main>
-                <Footer />
+                {/* <Footer /> */}
             </div>
         )
     }
 
     // === Savollar bo'limi (Asosiy view) ===
     return (
-        <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+        <div className="min-h-screen flex flex-col bg-white overflow-x-hidden relative">
+            {/* Blur overlay */}
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex items-center justify-center">
+                <div className="text-center">
+                    <h1 className="text-5xl font-bold text-slate-700 mb-4">Soon</h1>
+                    <p className="text-xl text-slate-500">This feature is coming soon</p>
+                </div>
+            </div>
             {/* <Navigation /> */}
-            <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8">
+            <main className="flex-grow py-8 sm:py-12 md:py-20 px-3 sm:px-6 lg:px-8 blur-sm pointer-events-none">
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">
                         IELTS Listening Practice Test ({testStage === 'part1' ? 'Part 1' : 'Part 2'})
@@ -770,7 +791,7 @@ const handleStartPart2 = () => {
                 </div>
             </main>
 
-            <Footer />
+            {/* <Footer /> */}
         </div>
     )
 }

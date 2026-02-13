@@ -3,7 +3,7 @@
 
 
 import Link from "next/link"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Clock, Upload, Lock } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -159,7 +159,7 @@ export default function ReadingSelectionPage() {
           )}
         </div>
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

@@ -4,7 +4,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 // import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { PenTool, Clock, FileText, Edit, TrendingUp } from "lucide-react"
 
 export default function WritingSelectionPage() {
@@ -184,7 +184,7 @@ export default function WritingSelectionPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

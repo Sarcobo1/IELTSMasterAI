@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import Footer from "@/components/footer"
+// import Footer from "@/components/footer"
 import { Mic, PenTool, BookOpen, Volume2, Clock, Zap, Target, ArrowRight } from "lucide-react"
 
 // --- TEST MA'LUMOTLARI ---
@@ -155,7 +155,7 @@ export default function TestsPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
       
       {/* GLOBAL STYLES & ANIMATIONS */}
       <style jsx global>{`

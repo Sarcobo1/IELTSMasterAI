@@ -75,7 +75,10 @@ export default function WritingTaskPage() {
   }
 
   const [questions, setQuestions] = useState<string[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [customQuestion, setCustomQuestion] = useState("")
+  const [useCustomQuestion, setUseCustomQuestion] = useState(false)
   const [essay, setEssay] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState("Overall")
@@ -94,12 +97,43 @@ export default function WritingTaskPage() {
   const [leftWidth, setLeftWidth] = useState(50) // percentage
   const [isResizing, setIsResizing] = useState(false)
 
-  // Load questions based on test type
+  // Load questions from AI
   useEffect(() => {
-    const questionType = config.promptType
-    const availableQuestions = SAMPLE_QUESTIONS[questionType as keyof typeof SAMPLE_QUESTIONS]
-    setQuestions(availableQuestions)
-  }, [testId])
+    const loadQuestions = async () => {
+      setLoadingQuestions(true)
+      try {
+        const response = await fetch("/api/groq-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ testId, count: 5 }),
+        })
+        
+        if (!response.ok) {
+          throw new Error("Failed to load questions")
+        }
+        
+        const data = await response.json()
+        if (data.questions && data.questions.length > 0) {
+          setQuestions(data.questions)
+        } else {
+          // Fallback to sample questions if AI fails
+          const questionType = config.promptType
+          const availableQuestions = SAMPLE_QUESTIONS[questionType as keyof typeof SAMPLE_QUESTIONS]
+          setQuestions(availableQuestions)
+        }
+      } catch (error) {
+        console.error("Error loading questions:", error)
+        // Fallback to sample questions
+        const questionType = config.promptType
+        const availableQuestions = SAMPLE_QUESTIONS[questionType as keyof typeof SAMPLE_QUESTIONS]
+        setQuestions(availableQuestions)
+      } finally {
+        setLoadingQuestions(false)
+      }
+    }
+    
+    loadQuestions()
+  }, [testId, config.promptType])
 
   // Timer logic
   useEffect(() => {
@@ -186,7 +220,11 @@ export default function WritingTaskPage() {
     setGrammarResult(null)
 
     try {
-      const question = questions[currentQuestionIndex]
+      const question = useCustomQuestion ? customQuestion : (questions[currentQuestionIndex] || "")
+      if (!question.trim()) {
+        alert("Please write or select a question first.")
+        return
+      }
       const groqRes = await fetch("/api/groq-writing-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -251,6 +289,8 @@ export default function WritingTaskPage() {
     setTestStarted(false)
     setTimeUp(false)
     setTimeLeft(config.duration * 60)
+    setUseCustomQuestion(false)
+    setCustomQuestion("")
     setCurrentQuestionIndex((prev: number) => (prev + 1) % questions.length)
   }
 
@@ -318,19 +358,22 @@ export default function WritingTaskPage() {
     }
   }, [isResizing])
 
-  if (questions.length === 0) {
+  if (loadingQuestions || questions.length === 0) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
         {/* <Navigation /> */}
         <main className="flex-grow flex justify-center items-center">
-          <p className="text-slate-900 text-xl">Loading questions...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-900 text-xl">Loading questions...</p>
+          </div>
         </main>
         {/* <Footer /> */}
       </div>
     )
   }
 
-  const currentQuestion = questions[currentQuestionIndex] || ""
+  const currentQuestion = useCustomQuestion ? customQuestion : (questions[currentQuestionIndex] || "")
   const recommendations = generateRecommendations(currentQuestion)
 
   return (
@@ -364,11 +407,73 @@ export default function WritingTaskPage() {
               )}
             </div>
 
-            {/* Task Prompt */}
+            {/* AI Questions */}
+            {questions.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">AI Generated Questions:</h3>
+                <div className="space-y-2 mb-3">
+                  {questions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        if (!testStarted && !submitted) {
+                          setCurrentQuestionIndex(idx)
+                          setUseCustomQuestion(false)
+                        }
+                      }}
+                      disabled={testStarted || submitted}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                        !useCustomQuestion && currentQuestionIndex === idx
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      } ${testStarted || submitted ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className={`text-xs font-semibold ${!useCustomQuestion && currentQuestionIndex === idx ? 'text-blue-600' : 'text-slate-500'}`}>
+                          Q{idx + 1}
+                        </span>
+                        <p className="text-sm text-slate-900 flex-1">{q}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Task Prompt - Current Selected Question */}
             <div>
-              <p className="text-slate-900 font-semibold text-base leading-relaxed">
-                {currentQuestion}
+              <p className="text-xs text-slate-500 mb-2">Current Question:</p>
+              <p className="text-slate-900 font-semibold text-base leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
+                {currentQuestion || "No question selected. Choose an AI question above or write your own below."}
               </p>
+            </div>
+
+            {/* Custom Question Section */}
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-2">Write Your Own Question (Optional):</h3>
+              <textarea
+                value={customQuestion}
+                onChange={(e) => setCustomQuestion(e.target.value)}
+                placeholder="Enter your custom writing question here..."
+                className="w-full p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm resize-none"
+                rows={3}
+                disabled={testStarted || submitted}
+              />
+              {customQuestion.trim() && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="useCustom"
+                    checked={useCustomQuestion}
+                    onChange={(e) => setUseCustomQuestion(e.target.checked)}
+                    disabled={testStarted || submitted}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="useCustom" className="text-xs text-slate-600 cursor-pointer">
+                    Use my custom question
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Recommendations */}
@@ -391,10 +496,16 @@ export default function WritingTaskPage() {
               <div className="pt-4">
                 <Button
                   onClick={handleStartTest}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  disabled={!currentQuestion.trim()}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Start Test
                 </Button>
+                {!currentQuestion.trim() && (
+                  <p className="text-xs text-red-600 mt-2 text-center">
+                    Please select an AI question or write your own question
+                  </p>
+                )}
               </div>
             )}
 
