@@ -1,5 +1,6 @@
 // 📁 app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import connectToMongo from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import bcrypt from 'bcryptjs';
@@ -56,9 +57,21 @@ export async function POST(request: NextRequest) {
             tokenLength: token.length,
             tokenPreview: token.substring(0, 20) + '...'
         });
-        
-        // 6. Response qaytarish
-        return NextResponse.json({
+
+        // 6. 🔐 auth_token cookie o'rnatish (backend uchun)
+        const cookieStore = await cookies();
+        cookieStore.set({
+            name: 'auth_token',
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30, // 30 kun
+        });
+
+        // 7. Response qaytarish (frontend uchun token ham qoladi)
+        const response = NextResponse.json({
             message: 'Login muvaffaqiyatli',
             token,
             user: {
@@ -69,6 +82,8 @@ export async function POST(request: NextRequest) {
                 role: user.role
             }
         }, { status: 200 });
+
+        return response;
         
     } catch (error) {
         console.error('❌ Login xatosi:', error);
