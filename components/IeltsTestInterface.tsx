@@ -272,16 +272,14 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
     const currentPart = customData.parts[currentPartIndex];
     
     // Barcha Partlar bo'yicha savollarni yagona massivga jamlash
+    // ✅ MUHIM: Backend (AI parser) allaqachon global `id` berib keladi.
+    // Shu `id` ni o'zgartirmaymiz, aks holda javoblar bilan moslik buziladi.
     const allQuestions: Question[] = useMemo(() => {
-        let questionCounter = 1;
         const questions: Question[] = [];
         customData.parts.forEach(part => {
             part.question_groups.forEach(group => {
                 group.questions.forEach(q => {
-                    questions.push({
-                        ...q,
-                        id: questionCounter++ // Global ID berish
-                    });
+                    questions.push(q);
                 });
             });
         });
@@ -289,31 +287,18 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
     }, [customData.parts]);
 
     const totalQuestions = allQuestions.length;
-    
-    // Joriy Partning savol diapazonini topish mantiqi
-    const findQuestionRange = (targetPartIndex: number) => {
-        let currentQId = 1;
-        let startQ = 1;
-        let endQ = 0;
-        
-        for(let i = 0; i < customData.parts.length; i++){
-            const part = customData.parts[i];
-            let partQCount = part.question_groups.reduce((sum, group) => sum + group.questions.length, 0);
-            
-            if (i < targetPartIndex) {
-                currentQId += partQCount;
-            } else if (i === targetPartIndex) {
-                startQ = currentQId;
-                endQ = currentQId + partQCount - 1;
-                break;
-            }
-        }
-        return { startQ, endQ };
-    }
 
-    const currentPartRange = findQuestionRange(currentPartIndex);
-    const firstQuestionId = currentPartRange.startQ;
-    const lastQuestionId = currentPartRange.endQ;
+    // Joriy Partdagi savol ID'larini to'g'ridan‑to'g'ri o'zidan olamiz
+    const currentPartQuestionIds = useMemo(() => {
+        const ids: number[] = [];
+        currentPart.question_groups.forEach(group => {
+            group.questions.forEach(q => ids.push(q.id));
+        });
+        return ids.sort((a, b) => a - b);
+    }, [currentPart]);
+
+    const firstQuestionId = currentPartQuestionIds[0] ?? 1;
+    const lastQuestionId = currentPartQuestionIds[currentPartQuestionIds.length - 1] ?? totalQuestions;
 
 
     if (!currentPart) {
@@ -330,8 +315,13 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
         if (index >= 0 && index < totalParts) {
             setCurrentPartIndex(index);
             // Yangi qismdagi birinchi savolga o'tish
-            const newRange = findQuestionRange(index);
-            setCurrentQuestion(newRange.startQ); 
+            const part = customData.parts[index];
+            const ids: number[] = [];
+            part.question_groups.forEach(group => {
+                group.questions.forEach(q => ids.push(q.id));
+            });
+            const firstId = ids.length ? Math.min(...ids) : 1;
+            setCurrentQuestion(firstId); 
             setShowResults(false);
         }
     }
@@ -553,7 +543,6 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                             <div className="space-y-8">
                                 {currentPart.question_groups.map((group, groupIndex) => {
                                     const partQuestions = group.questions;
-                                    const currentPartStartQ = findQuestionRange(currentPartIndex).startQ;
                                     
                                     return (
                                         <div key={groupIndex} className="space-y-4">
@@ -570,8 +559,8 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                             
                                             <ul className="list-none space-y-4 ml-0">
                                                 {partQuestions.map((q, qIndex) => {
-                                                    // Global Savol ID'sini hisoblash
-                                                    const currentQId = currentPartStartQ + qIndex; 
+                                                    // Global Savol ID'si backenddan kelgan `q.id`
+                                                    const currentQId = q.id; 
                                                     
                                                     const isCurrent = currentQuestion === currentQId;
                                                     const userAnswer = answers[currentQId] || ''
@@ -585,11 +574,10 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                         optionsToShow = ['TRUE', 'FALSE', 'NOT GIVEN'];
                                                     }
                                                     
-                                                    if ((q.type === 'multiple_choice' || q.type === 'tfng') && optionsToShow && optionsToShow.every(opt => !opt.match(/^[A-Z]\./))) {
+                                                    // Agar variantlarda "A. ..." prefiksi bo'lmasa, faqat ko'rinish uchun qo'shamiz
+                                                    if ((q.type === 'multiple_choice' || q.type === 'tfng') && optionsToShow && optionsToShow.every(opt => !opt.match(/^[A-Z]\.\s/))) {
                                                         optionsToShow = optionsToShow.map((opt, idx) => `${String.fromCharCode(65 + idx)}. ${opt}`);
                                                     }
-
-                                                    const getOptionValue = (opt: string) => opt.split('.')[0].trim().replace(/\.$/, '') || opt;
 
 
                                                     return (
@@ -637,9 +625,10 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                     
                                                                     <div className="space-y-2 ml-4">
                                                                         {optionsToShow?.map((opt, idx) => {
-                                                                            const optionValue = getOptionValue(opt);
-                                                                            const isOptionCorrect = showResults && correctAnswer.toUpperCase() === optionValue.toUpperCase();
-                                                                            const isOptionSelected = userAnswer.toUpperCase() === optionValue.toUpperCase();
+                                                                            // Ekrandagi matndan "A. " prefiksini olib tashlab, asl javob matnini olamiz
+                                                                            const optionLabel = opt.replace(/^[A-Z]\.\s?/, '').trim();
+                                                                            const isOptionCorrect = showResults && correctAnswer.toUpperCase() === optionLabel.toUpperCase();
+                                                                            const isOptionSelected = userAnswer.toUpperCase() === optionLabel.toUpperCase();
                                                                             const isOptionIncorrectlySelected = showResults && isOptionSelected && !isOptionCorrect;
                                                                             
                                                                             return (
@@ -648,7 +637,7 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                                         ref={idx === 0 ? (el) => { inputRefs.current[currentQId] = el as HTMLInputElement } : undefined}
                                                                                         type="radio"
                                                                                         name={`q_${currentQId}`}
-                                                                                        value={optionValue} 
+                                                                                        value={optionLabel} 
                                                                                         checked={isOptionSelected}
                                                                                         onChange={(e) => handleAnswerChange(currentQId, e.target.value)}
                                                                                         onFocus={() => handleQuestionClick(currentQId)}
@@ -656,7 +645,7 @@ export default function IeltsTestInterface({ customData }: IeltsTestInterfacePro
                                                                                         className="mt-1 mr-3 text-blue-600 focus:ring-blue-500"
                                                                                     />
                                                                                     <span className={`text-gray-800 flex-1 ${isOptionCorrect ? 'font-bold text-green-700' : ''}`}>
-                                                                                        {opt.replace(/^[A-Z]\.\s?/, '')} 
+                                                                                        {optionLabel} 
                                                                                         {showResults && isOptionCorrect && <CheckCircle size={16} className="text-green-600 ml-2 inline" />}
                                                                                         {showResults && isOptionIncorrectlySelected && <XCircle size={16} className="text-red-600 ml-2 inline" />}
                                                                                     </span>
