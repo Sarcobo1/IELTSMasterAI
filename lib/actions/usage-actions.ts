@@ -18,6 +18,11 @@ export async function checkUsageLimit(userId: string) {
             return { canUse: false, message: "Foydalanuvchi topilmadi." };
         }
 
+        // ✅ PREMIUM foydalanuvchilar uchun HECH QANDAY KUNLIK LIMIT YO'Q
+        if (user.isPremium) {
+            return { canUse: true };
+        }
+
         const today = new Date().toISOString().split("T")[0];
         // lastUploadDate ni stringga aylantirib, faqat sanani olamiz (YYYY-MM-DD)
         const lastUsageDate = user.lastUploadDate?.toISOString().split("T")[0];
